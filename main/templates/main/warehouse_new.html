@@ -9,28 +9,29 @@
 <table>
     <thead>
         <tr>
-            <th style="border: 3px double rgb(0, 0, 0);">Артикул</th>
-            <th style="border: 3px double rgb(0, 0, 0);">Название</th>
-            <th style="border: 3px double rgb(0, 0, 0);">Количество</th>
-            <th style="border: 3px double rgb(0, 0, 0);">Марка</th>
-            <th style="border: 3px double rgb(0, 0, 0);">Модель</th>
-            <th style="border: 3px double rgb(0, 0, 0);">Производитель</th>
+            <th>Артикул</th>
+            <th>Название</th>
+            <th>Количество</th>
+            <th>Марка</th>
+            <th>Модель</th>
+            <th>Производитель</th>
+            <th>Действия</th>
         </tr>
     </thead>
-<!--th style="border: 3px double rgb(0, 0, 0);">Header 1</th>
-      <th style="border: 3px double rgb(0, 0, 0);">Header 2</th>-->
     <tbody>
         {% for item in items %}
-            <tr>
-
-            <td align="center">{{ item.part_number }}</td>
-            <td align="center">{{ item.name }}</td>
-            <td align="center">{{ item.quantity }}</td>
-            <td align="center">{{ item.brand }}</td>
-            <td align="center">{{ item.model }}</td>
-            <td align="center" >{{ item.manufacturer }}</td>
-
-            </tr>
+        <tr>
+            <td>{{ item.part_number }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.brand }}</td>
+            <td>{{ item.model }}</td>
+            <td>{{ item.manufacturer }}</td>
+            <td>
+                <button class="editItemBtn" data-id="{{ item.id }}">Редактировать</button>
+                <button class="deleteItemBtn" data-id="{{ item.id }}">Удалить</button>
+            </td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
@@ -41,6 +42,15 @@
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Добавить</button>
+    </form>
+</div>
+
+<div id="editItemModal" style="display: none;">
+    <form id="editItemForm">
+        {% csrf_token %}
+        <input type="hidden" name="id" id="editItemId">
+        {{ form.as_p }}
+        <button type="submit">Сохранить</button>
     </form>
 </div>
 
@@ -73,6 +83,71 @@ document.getElementById('addItemForm').addEventListener('submit', function(event
     }).catch(error => {
         console.error("Error during fetch: ", error);
         alert('Ошибка при добавлении детали: ' + error.message);
+    });
+});
+
+document.querySelectorAll('.deleteItemBtn').forEach(button => {
+    button.addEventListener('click', function() {
+        if (confirm('Вы уверены, что хотите удалить эту деталь?')) {
+            fetch("{% url 'delete_item' %}", {
+                method: 'POST',
+                body: JSON.stringify({ id: this.dataset.id }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            }).then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Ошибка при удалении детали: ' + JSON.stringify(data.errors));
+                }
+            }).catch(error => {
+                console.error("Error during fetch: ", error);
+                alert('Ошибка при удалении детали: ' + error.message);
+            });
+        }
+    });
+});
+
+document.querySelectorAll('.editItemBtn').forEach(button => {
+    button.addEventListener('click', function() {
+        document.getElementById('editItemId').value = this.dataset.id;
+        // Fetch existing data and fill the form here (left for simplicity)
+        document.getElementById('editItemModal').style.display = 'block';
+    });
+});
+
+document.getElementById('editItemForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    var formData = new FormData(this);
+
+    fetch("{% url 'edit_item' %}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    }).then(response => {
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+        }
+        return response.json();
+    }).then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Ошибка при изменении детали: ' + JSON.stringify(data.errors));
+        }
+    }).catch(error => {
+        console.error("Error during fetch: ", error);
+        alert('Ошибка при изменении детали: ' + error.message);
     });
 });
 </script>
