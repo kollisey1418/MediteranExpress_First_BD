@@ -18,16 +18,21 @@
         white-space: nowrap; /* предотвращает перенос текста */
         overflow: hidden; /* скрывает переполненный текст */
         text-overflow: ellipsis; /* добавляет многоточие для переполненного текста */
-        position: relative;
     }
     th {
         background-color: #f2f2f2;
+    }
+    .marquee-container {
+        position: relative;
+        overflow: hidden;
     }
     .marquee {
         display: inline-block;
         white-space: nowrap;
         position: absolute;
+        left: 0;
         animation: marquee 10s linear infinite;
+        animation-play-state: paused; /* Останавливаем анимацию по умолчанию */
     }
     @keyframes marquee {
         from {
@@ -36,10 +41,6 @@
         to {
             transform: translateX(-100%);
         }
-    }
-    .marquee-container {
-        position: relative;
-        overflow: hidden;
     }
 </style>
 
