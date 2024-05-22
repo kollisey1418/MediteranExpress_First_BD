@@ -14,33 +14,11 @@
         border: 1px solid #dddddd;
         text-align: left;
         padding: 8px;
-        width: 12ch; /* ширина столбца "Артикул" */
-        white-space: nowrap; /* предотвращает перенос текста */
-        overflow: hidden; /* скрывает переполненный текст */
-        text-overflow: ellipsis; /* добавляет многоточие для переполненного текста */
+        white-space: normal; /* Позволяет переносу текста */
+        overflow-wrap: break-word; /* Разбивает длинные слова */
     }
     th {
         background-color: #f2f2f2;
-    }
-    .marquee-container {
-        position: relative;
-        overflow: hidden;
-    }
-    .marquee {
-        display: inline-block;
-        white-space: nowrap;
-        position: absolute;
-        left: 0;
-        animation: marquee 10s linear infinite;
-        animation-play-state: paused; /* Останавливаем анимацию по умолчанию */
-    }
-    @keyframes marquee {
-        from {
-            transform: translateX(100%);
-        }
-        to {
-            transform: translateX(-100%);
-        }
     }
 </style>
 
@@ -60,12 +38,12 @@
     <tbody>
         {% for item in items %}
         <tr>
-            <td>{{ item.part_number }}</td>
-            <td><div class="marquee-container"><div class="marquee">{{ item.name }}</div></div></td>
+            <td style="width: 12ch;">{{ item.part_number }}</td>
+            <td>{{ item.name }}</td>
             <td>{{ item.quantity }}</td>
-            <td><div class="marquee-container"><div class="marquee">{{ item.brand }}</div></div></td>
-            <td><div class="marquee-container"><div class="marquee">{{ item.model }}</div></div></td>
-            <td><div class="marquee-container"><div class="marquee">{{ item.manufacturer }}</div></div></td>
+            <td>{{ item.brand }}</td>
+            <td>{{ item.model }}</td>
+            <td>{{ item.manufacturer }}</td>
             <td>
                 <button class="editItemBtn" data-id="{{ item.id }}">Редактировать</button>
                 <button class="deleteItemBtn" data-id="{{ item.id }}">Удалить</button>
@@ -188,19 +166,6 @@ document.getElementById('editItemForm').addEventListener('submit', function(even
     }).catch(error => {
         console.error("Error during fetch: ", error);
         alert('Ошибка при изменении детали: ' + error.message);
-    });
-});
-
-// Проверка ширины текста и включение бегущей строки при необходимости
-document.addEventListener('DOMContentLoaded', function() {
-    const marqueeContainers = document.querySelectorAll('.marquee-container');
-    marqueeContainers.forEach(container => {
-        const marquee = container.querySelector('.marquee');
-        if (marquee.scrollWidth > container.clientWidth) {
-            marquee.style.animationPlayState = 'running';
-        } else {
-            marquee.style.animationPlayState = 'paused';
-        }
     });
 });
 </script>
