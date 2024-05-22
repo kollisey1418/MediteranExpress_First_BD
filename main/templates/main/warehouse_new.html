@@ -20,15 +20,18 @@
     th {
         background-color: #f2f2f2;
     }
+    .center-text {
+        text-align: center;
+    }
 </style>
 
 <h1>Новый склад</h1>
 <table>
     <thead>
         <tr>
-            <th>Артикул</th>
+            <th class="center-text">Артикул</th>
             <th>Название</th>
-            <th>Количество</th>
+            <th class="center-text">Количество</th>
             <th>Марка</th>
             <th>Модель</th>
             <th>Производитель</th>
@@ -38,9 +41,9 @@
     <tbody>
         {% for item in items %}
         <tr>
-            <td style="width: 12ch;">{{ item.part_number }}</td>
+            <td class="center-text" style="width: 12ch;">{{ item.part_number }}</td>
             <td>{{ item.name }}</td>
-            <td>{{ item.quantity }}</td>
+            <td class="center-text">{{ item.quantity }}</td>
             <td>{{ item.brand }}</td>
             <td>{{ item.model }}</td>
             <td>{{ item.manufacturer }}</td>
