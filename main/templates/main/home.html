@@ -1,0 +1,11 @@
+<!-- main/templates/main/home.html -->
+{% extends 'main/base.html' %}
+
+{% block title %}Home - MediteranExpress{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <a href="{% url 'garage' %}" class="box">Гараж</a>
+    <a href="{% url 'autopark' %}" class="box">Автопарк</a>
+</div>
+{% endblock %}

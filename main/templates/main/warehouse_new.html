@@ -1,0 +1,75 @@
+<!-- main/templates/main/warehouse_new.html -->
+
+{% extends 'main/base.html' %}
+
+{% block title %}Новый склад{% endblock %}
+
+{% block content %}
+<h1>Новый склад</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Артикул</th>
+            <th>Название</th>
+            <th>Количество</th>
+            <th>Марка</th>
+            <th>Модель</th>
+            <th>Производитель</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        <tr>
+            <td>{{ item.part_number }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.brand }}</td>
+            <td>{{ item.model }}</td>
+            <td>{{ item.manufacturer }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<button id="addItemBtn">Добавить новую деталь</button>
+
+<div id="addItemModal" style="display: none;">
+    <form id="addItemForm">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Добавить</button>
+    </form>
+</div>
+
+<script>
+document.getElementById('addItemBtn').addEventListener('click', function() {
+    document.getElementById('addItemModal').style.display = 'block';
+});
+
+document.getElementById('addItemForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    var formData = new FormData(this);
+
+    fetch("{% url 'add_item' %}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    }).then(response => {
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+        }
+        return response.json();
+    }).then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Ошибка при добавлении детали: ' + JSON.stringify(data.errors));
+        }
+    }).catch(error => {
+        console.error("Error during fetch: ", error);
+        alert('Ошибка при добавлении детали: ' + error.message);
+    });
+});
+</script>
+{% endblock %}

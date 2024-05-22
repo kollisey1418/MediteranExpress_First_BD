@@ -1,0 +1,13 @@
+<!-- main/templates/main/garage.html -->
+{% extends 'main/base.html' %}
+
+{% block title %}Гараж - MediteranExpress{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <a href="{% url 'warehouse_new' %}" class="box">Новый склад</a>
+    <a href="#" class="box">Старый склад</a>
+    <a href="#" class="box">Расходники</a>
+    <a href="#" class="box">Инструмент</a>
+</div>
+{% endblock %}
