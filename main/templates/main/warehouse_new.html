@@ -23,10 +23,18 @@
     .center-text {
         text-align: center;
     }
+    .search-container {
+        margin-bottom: 10px;
+    }
 </style>
 
 <h1>Новый склад</h1>
-<table>
+
+<div class="search-container">
+    <input type="text" id="searchInput" placeholder="Поиск по таблице...">
+</div>
+
+<table id="warehouseTable">
     <thead>
         <tr>
             <th class="center-text">Артикул</th>
@@ -170,6 +178,29 @@ document.getElementById('editItemForm').addEventListener('submit', function(even
         console.error("Error during fetch: ", error);
         alert('Ошибка при изменении детали: ' + error.message);
     });
+});
+
+// Функция поиска
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    var input, filter, table, tr, td, i, j, txtValue;
+    input = document.getElementById('searchInput');
+    filter = input.value.toLowerCase();
+    table = document.getElementById('warehouseTable');
+    tr = table.getElementsByTagName('tr');
+
+    for (i = 1; i < tr.length; i++) {
+        tr[i].style.display = 'none'; // Скрываем строку по умолчанию
+        td = tr[i].getElementsByTagName('td');
+        for (j = 0; j < td.length; j++) {
+            if (td[j]) {
+                txtValue = td[j].textContent || td[j].innerText;
+                if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                    tr[i].style.display = '';
+                    break; // Если найдена совпадающая ячейка, показываем строку и прекращаем проверку других ячеек
+                }
+            }
+        }
+    }
 });
 </script>
 {% endblock %}
