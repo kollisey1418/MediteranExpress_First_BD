@@ -5,6 +5,38 @@
 {% block title %}Новый склад{% endblock %}
 
 {% block content %}
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+        width: 12ch; /* ширина столбца "Артикул" */
+        white-space: nowrap; /* предотвращает перенос текста */
+        overflow: hidden; /* скрывает переполненный текст */
+        text-overflow: ellipsis; /* добавляет многоточие для переполненного текста */
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+    .marquee {
+        display: inline-block;
+        white-space: nowrap;
+        animation: marquee 10s linear infinite;
+    }
+    @keyframes marquee {
+        from {
+            transform: translateX(100%);
+        }
+        to {
+            transform: translateX(-100%);
+        }
+    }
+</style>
+
 <h1>Новый склад</h1>
 <table>
     <thead>
@@ -22,11 +54,11 @@
         {% for item in items %}
         <tr>
             <td>{{ item.part_number }}</td>
-            <td>{{ item.name }}</td>
+            <td><div class="marquee">{{ item.name }}</div></td>
             <td>{{ item.quantity }}</td>
-            <td>{{ item.brand }}</td>
-            <td>{{ item.model }}</td>
-            <td>{{ item.manufacturer }}</td>
+            <td><div class="marquee">{{ item.brand }}</div></td>
+            <td><div class="marquee">{{ item.model }}</div></td>
+            <td><div class="marquee">{{ item.manufacturer }}</div></td>
             <td>
                 <button class="editItemBtn" data-id="{{ item.id }}">Редактировать</button>
                 <button class="deleteItemBtn" data-id="{{ item.id }}">Удалить</button>
@@ -35,6 +67,7 @@
         {% endfor %}
     </tbody>
 </table>
+
 <button id="addItemBtn">Добавить новую деталь</button>
 
 <div id="addItemModal" style="display: none;">
