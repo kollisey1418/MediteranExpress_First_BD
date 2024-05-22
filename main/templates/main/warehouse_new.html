@@ -18,6 +18,7 @@
         white-space: nowrap; /* предотвращает перенос текста */
         overflow: hidden; /* скрывает переполненный текст */
         text-overflow: ellipsis; /* добавляет многоточие для переполненного текста */
+        position: relative;
     }
     th {
         background-color: #f2f2f2;
@@ -25,6 +26,7 @@
     .marquee {
         display: inline-block;
         white-space: nowrap;
+        position: absolute;
         animation: marquee 10s linear infinite;
     }
     @keyframes marquee {
@@ -34,6 +36,10 @@
         to {
             transform: translateX(-100%);
         }
+    }
+    .marquee-container {
+        position: relative;
+        overflow: hidden;
     }
 </style>
 
@@ -54,11 +60,11 @@
         {% for item in items %}
         <tr>
             <td>{{ item.part_number }}</td>
-            <td><div class="marquee">{{ item.name }}</div></td>
+            <td><div class="marquee-container"><div class="marquee">{{ item.name }}</div></div></td>
             <td>{{ item.quantity }}</td>
-            <td><div class="marquee">{{ item.brand }}</div></td>
-            <td><div class="marquee">{{ item.model }}</div></td>
-            <td><div class="marquee">{{ item.manufacturer }}</div></td>
+            <td><div class="marquee-container"><div class="marquee">{{ item.brand }}</div></div></td>
+            <td><div class="marquee-container"><div class="marquee">{{ item.model }}</div></div></td>
+            <td><div class="marquee-container"><div class="marquee">{{ item.manufacturer }}</div></div></td>
             <td>
                 <button class="editItemBtn" data-id="{{ item.id }}">Редактировать</button>
                 <button class="deleteItemBtn" data-id="{{ item.id }}">Удалить</button>
@@ -181,6 +187,19 @@ document.getElementById('editItemForm').addEventListener('submit', function(even
     }).catch(error => {
         console.error("Error during fetch: ", error);
         alert('Ошибка при изменении детали: ' + error.message);
+    });
+});
+
+// Проверка ширины текста и включение бегущей строки при необходимости
+document.addEventListener('DOMContentLoaded', function() {
+    const marqueeContainers = document.querySelectorAll('.marquee-container');
+    marqueeContainers.forEach(container => {
+        const marquee = container.querySelector('.marquee');
+        if (marquee.scrollWidth > container.clientWidth) {
+            marquee.style.animationPlayState = 'running';
+        } else {
+            marquee.style.animationPlayState = 'paused';
+        }
     });
 });
 </script>
