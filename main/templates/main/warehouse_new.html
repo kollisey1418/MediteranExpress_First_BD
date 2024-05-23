@@ -23,23 +23,53 @@
     .center-text {
         text-align: center;
     }
+    .availability-red {
+        background-color: red;
+    }
+    .availability-yellow {
+        background-color: yellow;
+    }
+    .availability-green {
+        background-color: green;
+    }
     .search-container {
         margin-bottom: 10px;
+    }
+    .availability {
+        width: 30px; /* Уменьшаем ширину колонки */
+        height: 20px; /* Высота индикатора */
+        display: inline-block;
+    }
+    .sort-buttons {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .sort-buttons button {
+        margin-left: 5px;
     }
 </style>
 
 <h1>Новый склад</h1>
 
 <div class="search-container">
+    <label for="searchInput">Поиск по таблице:</label>
     <input type="text" id="searchInput" placeholder="Поиск по таблице...">
 </div>
 
 <table id="warehouseTable">
     <thead>
         <tr>
+            <th class="center-text">Наличие</th>
             <th class="center-text">Артикул</th>
             <th>Название</th>
-            <th class="center-text">Количество</th>
+            <th class="center-text">
+                Количество
+                <div class="sort-buttons">
+                    <button id="sortAscBtn">⬆️</button>
+                    <button id="sortDescBtn">⬇️</button>
+                </div>
+            </th>
             <th>Марка</th>
             <th>Модель</th>
             <th>Производитель</th>
@@ -49,6 +79,9 @@
     <tbody>
         {% for item in items %}
         <tr>
+            <td class="center-text">
+                <div class="availability {% if item.quantity == 0 %}availability-red{% elif item.quantity == 1 %}availability-yellow{% else %}availability-green{% endif %}"></div>
+            </td>
             <td class="center-text" style="width: 12ch;">{{ item.part_number }}</td>
             <td>{{ item.name }}</td>
             <td class="center-text">{{ item.quantity }}</td>
@@ -202,5 +235,44 @@ document.getElementById('searchInput').addEventListener('keyup', function() {
         }
     }
 });
+
+// Функции сортировки
+document.getElementById('sortAscBtn').addEventListener('click', function() {
+    sortTable(true);
+});
+
+document.getElementById('sortDescBtn').addEventListener('click', function() {
+    sortTable(false);
+});
+
+function sortTable(ascending) {
+    var table, rows, switching, i, x, y, shouldSwitch;
+    table = document.getElementById('warehouseTable');
+    switching = true;
+    while (switching) {
+        switching = false;
+        rows = table.rows;
+        for (i = 1; i < (rows.length - 1); i++) {
+            shouldSwitch = false;
+            x = rows[i].getElementsByTagName('td')[3]; // Колонка "Количество"
+            y = rows[i + 1].getElementsByTagName('td')[3]; // Следующая строка, колонка "Количество"
+            if (ascending) {
+                if (parseInt(x.innerHTML) > parseInt(y.innerHTML)) {
+                    shouldSwitch = true;
+                    break;
+                }
+            } else {
+                if (parseInt(x.innerHTML) < parseInt(y.innerHTML)) {
+                    shouldSwitch = true;
+                    break;
+                }
+            }
+        }
+        if (shouldSwitch) {
+            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+            switching = true;
+        }
+    }
+}
 </script>
 {% endblock %}
