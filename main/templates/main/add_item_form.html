@@ -1,0 +1,56 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Добавить запись{% endblock %}
+
+{% block content %}
+<style>
+    form {
+        display: flex;
+        flex-direction: column;
+        gap: 6px; /* Увеличенный отступ между строками */
+    }
+    label {
+        margin-bottom: 5px;
+    }
+    input[type="text"], input[type="number"] {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 5px;
+        box-sizing: border-box;
+    }
+    button {
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #45a049;
+    }
+</style>
+
+<h2>Добавить запись</h2>
+<form id="addItemForm" method="post" action="{% url 'add_item' %}">
+    {% csrf_token %}
+    <label for="part_number">Артикул:</label>
+    <input type="text" id="part_number" name="part_number" required>
+
+    <label for="name">Название:</label>
+    <input type="text" id="name" name="name" required>
+
+    <label for="quantity">Количество:</label>
+    <input type="number" id="quantity" name="quantity" required min="1">
+
+    <label for="brand">Марка:</label>
+    <input type="text" id="brand" name="brand" required>
+
+    <label for="model">Модель:</label>
+    <input type="text" id="model" name="model" required>
+
+    <label for="manufacturer">Производитель:</label>
+    <input type="text" id="manufacturer" name="manufacturer" required>
+
+    <button type="submit">Добавить</button>
+</form>
+{% endblock %}

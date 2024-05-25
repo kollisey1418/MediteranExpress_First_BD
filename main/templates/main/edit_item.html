@@ -1,0 +1,14 @@
+<!-- main/templates/main/edit_item.html -->
+
+{% extends 'main/base.html' %}
+
+{% block title %}Редактировать элемент{% endblock %}
+
+{% block content %}
+<h1>Редактировать элемент</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Сохранить</button>
+</form>
+{% endblock %}

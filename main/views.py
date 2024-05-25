@@ -1,11 +1,9 @@
 # main/views.py
 
-from django.shortcuts import render
-from django.http import JsonResponse
-from .models import WarehouseItem
-from .forms import WarehouseItemForm
-from django.views.decorators.csrf import csrf_exempt
-import json
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse
+from .models import Item
+from .forms import ItemForm
 
 def home(request):
     return render(request, 'main/home.html')
@@ -13,72 +11,48 @@ def home(request):
 def garage(request):
     return render(request, 'main/garage.html')
 
+def warehouse_new(request):
+    items = Item.objects.all()
+    return render(request, 'main/warehouse_new.html', {'items': items})
+
 def autopark(request):
     return render(request, 'main/autopark.html')
 
-def warehouse_new(request):
-    items = WarehouseItem.objects.all()
-    form = WarehouseItemForm()  # Инициализируем форму
-    return render(request, 'main/warehouse_new.html', {'items': items, 'form': form})
+def add_item_form(request):
+    form = ItemForm()
+    return render(request, 'main/add_item_form.html', {'form': form})
 
 def add_item(request):
     if request.method == 'POST':
-        form = WarehouseItemForm(request.POST)
+        form = ItemForm(request.POST)
         if form.is_valid():
             part_number = form.cleaned_data['part_number']
             quantity = form.cleaned_data['quantity']
-            item, created = WarehouseItem.objects.get_or_create(
-                part_number=part_number,
-                defaults={
-                    'name': form.cleaned_data['name'],
-                    'brand': form.cleaned_data['brand'],
-                    'model': form.cleaned_data['model'],
-                    'manufacturer': form.cleaned_data['manufacturer'],
-                    'quantity': quantity,
-                }
-            )
-            if not created:
+            try:
+                item = Item.objects.get(part_number=part_number)
                 item.quantity += quantity
                 item.save()
-            return JsonResponse({'success': True})
-        else:
-            if 'part_number' in form.errors:
-                item = WarehouseItem.objects.get(part_number=form.data['part_number'])
-                item.quantity += int(form.data['quantity'])
+            except Item.DoesNotExist:
+                item = form.save(commit=False)
+                item.availability = 'green'  # Установите значение поля "Наличие" по умолчанию
                 item.save()
-                return JsonResponse({'success': True})
-            else:
-                return JsonResponse({'success': False, 'errors': form.errors})
-    return JsonResponse({'success': False, 'errors': 'Invalid request method'})
+            return HttpResponse('<script>window.close();window.opener.location.reload();</script>')
+        else:
+            return HttpResponse('<script>alert("Ошибка при добавлении записи. Проверьте данные и попробуйте снова.");</script>')
+    return HttpResponse('<script>alert("Некорректный метод запроса.");</script>')
 
-@csrf_exempt
-def delete_item(request):
+def edit_item(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
     if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            item = WarehouseItem.objects.get(id=data['id'])
-            item.delete()
-            return JsonResponse({'success': True})
-        except WarehouseItem.DoesNotExist:
-            return JsonResponse({'success': False, 'errors': 'Item does not exist'})
-        except Exception as e:
-            return JsonResponse({'success': False, 'errors': str(e)})
-    return JsonResponse({'success': False, 'errors': 'Invalid request method'})
+        form = ItemForm(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            return redirect('warehouse_new')
+    else:
+        form = ItemForm(instance=item)
+    return render(request, 'main/edit_item.html', {'form': form})
 
-@csrf_exempt
-def edit_item(request):
-    if request.method == 'POST':
-        try:
-            data = request.POST
-            item = WarehouseItem.objects.get(id=data['id'])
-            form = WarehouseItemForm(request.POST, instance=item)
-            if form.is_valid():
-                form.save()
-                return JsonResponse({'success': True})
-            else:
-                return JsonResponse({'success': False, 'errors': form.errors})
-        except WarehouseItem.DoesNotExist:
-            return JsonResponse({'success': False, 'errors': 'Item does not exist'})
-        except Exception as e:
-            return JsonResponse({'success': False, 'errors': str(e)})
-    return JsonResponse({'success': False, 'errors': 'Invalid request method'})
+def delete_item(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    item.delete()
+    return redirect('warehouse_new')
