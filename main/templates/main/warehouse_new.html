@@ -103,7 +103,7 @@
                 <td class="center-text">
                     <span class="{% if item.quantity == 0 %}availability-red{% elif item.quantity == 1 %}availability-yellow{% elif item.quantity > 1 %}availability-green{% endif %}"></span>
                 </td>
-                <td>{{ item.part_number }}</td>
+                <td>{{ item.article }}</td>
                 <td>{{ item.name }}</td>
                 <td class="center-text">{{ item.quantity }}</td>
                 <td>{{ item.brand }}</td>
@@ -183,8 +183,8 @@ function sortTable(ascending) {
 
 // JavaScript для открытия формы добавления в новом окне
 function openAddItemForm() {
-    var width = 480; // Увеличение на 20%
-    var height = 540; // Увеличение на 20%
+    var width = 500; // Увеличение на 20%
+    var height = 1000; // Увеличение на 20%
     var left = (screen.width - width) / 2;
     var top = (screen.height - height) / 2;
     window.open("{% url 'add_item_form' %}", "Добавить запись", `width=${width},height=${height},top=${top},left=${left}`);

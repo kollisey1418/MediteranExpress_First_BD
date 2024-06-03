@@ -7,7 +7,7 @@
     form {
         display: flex;
         flex-direction: column;
-        gap: 6px; /* Увеличенный отступ между строками */
+        gap: 3px; /* Увеличенный отступ между строками */
     }
     label {
         margin-bottom: 5px;
@@ -18,6 +18,12 @@
         margin-bottom: 5px;
         box-sizing: border-box;
     }
+     select {
+         width: 100%;
+         padding: 8px;
+         margin-bottom: 5px;
+         box-sizing: border-box;
+     }
     button {
         padding: 10px 20px;
         background-color: #4CAF50;
@@ -28,29 +34,160 @@
     button:hover {
         background-color: #45a049;
     }
+
+
 </style>
 
 <h2>Добавить запись</h2>
-<form id="addItemForm" method="post" action="{% url 'add_item' %}">
+    <div class="form-container">
+    <form id="addItemForm" method="post" action="{% url 'add_item' %}">
     {% csrf_token %}
-    <label for="part_number">Артикул:</label>
-    <input type="text" id="part_number" name="part_number" required>
 
-    <label for="name">Название:</label>
-    <input type="text" id="name" name="name" required>
+        <label for="article">Артикул:</label>
+        <input type="text" id="article" name="article" required>
 
-    <label for="quantity">Количество:</label>
-    <input type="number" id="quantity" name="quantity" required min="1">
+        <label for="name">Название:</label>
+        <input type="text" id="name" name="name" required>
 
-    <label for="brand">Марка:</label>
-    <input type="text" id="brand" name="brand" required>
+        <label for="quantity">Количество:</label>
+        <input type="number" id="quantity" name="quantity" required min="1">
 
-    <label for="model">Модель:</label>
-    <input type="text" id="model" name="model" required>
+        <label for="brand">Марка:</label>
+        <input type="text" id="brand" name="brand" required>
 
-    <label for="manufacturer">Производитель:</label>
-    <input type="text" id="manufacturer" name="manufacturer" required>
+        <label for="model">Модель:</label>
+        <input type="text" id="model" name="model" required>
+
+        <label for="manufacturer">Производитель:</label>
+        <input type="text" id="manufacturer" name="manufacturer" required>
+     <label for="part_type">Тип запчасти:</label>
+    <select name="part_type" id="part_type" required>
+        <option value="" disabled selected>Выберите тип запчасти</option>
+        <optgroup label="Двигатель">
+            <option value="Топливная система">Топливная система</option>
+            <option value="Система охлаждения">Система охлаждения</option>
+            <option value="Выхлопная система">Выхлопная система</option>
+            <option value="Резиновые и иные уплотнения">Резиновые и иные уплотнения</option>
+            <option value="Детали двигателя">Детали двигателя</option>
+            <option value="Другое для двигателя">Другое для двигателя</option>
+        </optgroup>
+
+
+        <optgroup label="Трансмиссия">
+            <option value="Коробка передач">Коробка передач</option>
+            <option value="Карданный вал">Карданный вал</option>
+            <option value="Редуктор">Редуктор</option>
+            <option value="Полуоси">Полуоси</option>
+            <option value="Ретардер">Ретардер</option>
+            <option value="Резиновые и иные уплотнения">Резиновые и иные уплотнения</option>
+            <option value="Другое для трансмиссии">Другое для трансмиссии</option>
+        </optgroup>
+
+
+<optgroup label="Пневмосистема">
+            <option value="Воздух для тормозов">Воздух для тормозов</option>
+            <option value="Воздух для подвески">Воздух для подвески</option>
+            <option value="Воздух для дверей и салона">Воздух для дверей и салона</option>
+            <option value="Другое для пневмосистемы">Другое для пневмосистемы</option>
+        </optgroup>
+
+
+        <optgroup label="Ходовая часть">
+            <option value="Амортизаторы">Амортизаторы</option>
+            <option value="Пружины">Пружины</option>
+            <option value="Рессоры">Рессоры</option>
+            <option value="Пневмоподушки">Пневмоподушки</option>
+            <option value="Колесные диски">Колесные диски</option>
+            <option value="Шины">Шины</option>
+            <option value="Шаровые опоры">Шаровые опоры</option>
+            <option value="Тяги или рычаги">Тяги или рычаги</option>
+            <option value="Сайлентблоки">Сайлентблоки</option>
+            <option value="Другое для ходовой части">Другое для ходовой части</option>
+        </optgroup>
+
+
+ <optgroup label="Тормозная система">
+            <option value="Суппорта">Суппорта</option>
+            <option value="Колодки дисковые">Колодки дисковые</option>
+            <option value="Колодки барабанные">Колодки барабанные</option>
+            <option value="Колодки ручника">Колодки ручника</option>
+            <option value="Диски">Диски</option>
+            <option value="Барабаны">Барабаны</option>
+            <option value="Тросы">Тросы</option>
+            <option value="Трубки">Трубки</option>
+            <option value="Другое для тормозной системы">Другое для тормозной системы</option>
+        </optgroup>
+
+ <optgroup label="Рулевое управление">
+            <option value="Рулевая колонка">Рулевая колонка</option>
+            <option value="Рулевые тяги">Рулевые тяги</option>
+            <option value="Усилитель руля">Усилитель руля</option>
+            <option value="Другое для рулевого управления">Другое для рулевого управления</option>
+        </optgroup>
+
+ <optgroup label="Электрическая система">
+            <option value="Генератор">Генератор</option>
+            <option value="Стартер">Стартер</option>
+            <option value="АКБ">АКБ</option>
+            <option value="Проводка и разъемы">Проводка и разъемы</option>
+            <option value="Освещение">Освещение</option>
+            <option value="Приборная панель и электроника управления">Приборная панель и электроника управления</option>
+            <option value="Лампочки 24В">Лампочки 24В</option>
+            <option value="Лампочки 12В">Лампочки 12В</option>
+            <option value="Предохранители">Предохранители</option>
+            <option value="Другое для электрики">Другое для электрики</option>
+        </optgroup>
+
+ <optgroup label="Система кондиционирования и отопления">
+            <option value="Компрессор кондиционера">Компрессор кондиционера</option>
+            <option value="Радиаторы">Радиаторы</option>
+            <option value="Вентиляторы">Вентиляторы</option>
+            <option value="Трубки">Трубки</option>
+            <option value="Фрион">Фрион</option>
+            <option value="Другое для конд. и отоп.">Другое для конд. и отоп.</option>
+        </optgroup>
+
+ <optgroup label="Кузов">
+            <option value="Каркас кузова">Каркас кузова</option>
+            <option value="Двери и окна">Двери и окна</option>
+            <option value="Капот и багажные отсеки">Капот и багажные отсеки</option>
+            <option value="Зеркала">Зеркала</option>
+            <option value="Стеклоочистители">Стеклоочистители</option>
+            <option value="Другое для кузова">Другое для кузова</option>
+        </optgroup>
+
+ <optgroup label="Салон">
+            <option value="Сиденья">Сиденья</option>
+            <option value="Обивка и декоративные панели">Обивка и декоративные панели</option>
+            <option value="Пол и потолок">Пол и потолок</option>
+            <option value="Система безопасности">Система безопасности</option>
+            <option value="Аудио- и видеосистемы">Аудио- и видеосистемы</option>
+            <option value="Другое для салона">Другое для салона</option>
+        </optgroup>
+
+ <optgroup label="Детали для ТО">
+            <option value="Ремень генератора">Ремень генератора</option>
+            <option value="Ремень кондиционера">Ремень кондиционера</option>
+            <option value="Приводной ремень">Приводной ремень</option>
+            <option value="Фильтр топливный">Фильтр топливный</option>
+            <option value="Фильтр масляный">Фильтр масляный</option>
+            <option value="Фильтр воздушный">Фильтр воздушный</option>
+            <option value="Фильтр пневмосистемы">Фильтр пневмосистемы</option>
+            <option value="Фильтр салона">Фильтр салона</option>
+            <option value="Другое для ТО">Другое для ТО</option>
+        </optgroup>
+
+ <optgroup label="Жидкости">
+            <option value="Моторное масло">Моторное масло</option>
+            <option value="Трансмиссионное масло">Трансмиссионное масло</option>
+            <option value="Тормозная жидкость">Тормозная жидкость</option>
+            <option value="Антифриз">Антифриз</option>
+            <option value="Омывающая жидкость">Омывающая жидкость</option>
+            <option value="Другие жидкости">Другие жидкости</option>
+        </optgroup>
+    </select>
 
     <button type="submit">Добавить</button>
 </form>
+    </div>>
 {% endblock %}

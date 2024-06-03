@@ -6,4 +6,4 @@ from .models import Item
 class ItemForm(forms.ModelForm):
     class Meta:
         model = Item
-        fields = ['part_number', 'name', 'quantity', 'brand', 'model', 'manufacturer']
+        fields = ['article', 'name', 'quantity', 'brand', 'model', 'manufacturer', 'part_type']  # Убедитесь, что здесь нет поля 'part_number'
