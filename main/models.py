@@ -1,5 +1,18 @@
 from django.db import models
 
+class Brand(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+class Model(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
 # Новые модели для категорий запчастей
 class EngineParts(models.Model):
     availability = models.BooleanField(default=True)
@@ -162,6 +175,7 @@ class Item(models.Model):
     availability = models.CharField(max_length=10, default='green', blank=True)
     article = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
+    size = models.CharField(max_length=100, blank=True, null=True)
     quantity = models.PositiveIntegerField()
     brand = models.CharField(max_length=100)
     model = models.CharField(max_length=100)

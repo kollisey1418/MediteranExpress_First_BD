@@ -70,9 +70,143 @@
 
 <h1>Новый склад</h1>
 
-<div class="search-container">
-    <label for="searchInput">Поиск по таблице:</label>
-    <input type="text" id="searchInput" placeholder="Поиск по таблице...">
+<div class="filter-container">
+    <div class="search-container">
+        <label for="searchInput">Поиск по таблице:</label>
+        <input type="text" id="searchInput" placeholder="Поиск по таблице...">
+    </div>
+
+    <form method="GET" action="{% url 'warehouse_new' %}">
+        <label for="brand">Марка:</label>
+        <select name="brand" id="brand">
+            <option value="">Все</option>
+            {% for brand in brands %}
+                <option value="{{ brand.name }}" {% if request.GET.brand == brand.name|stringformat:"s" %}selected{% endif %}>{{ brand.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="model">Модель:</label>
+        <select name="model" id="model">
+            <option value="">Все</option>
+            {% for model in models %}
+                <option value="{{ model.name }}" {% if request.GET.model == model.name|stringformat:"s" %}selected{% endif %}>{{ model.name }}</option>
+            {% endfor %}
+        </select>
+        <label for="partTypeFilter">Тип запчасти:</label>
+        <select id="partTypeFilter" name="part_type">
+            <option value="">Все</option>
+            <optgroup label="Двигатель">
+                <option value="Топливная система" {% if request.GET.part_type == 'Топливная система' %}selected{% endif %}>Топливная система</option>
+                <option value="Система охлаждения" {% if request.GET.part_type == 'Система охлаждения' %}selected{% endif %}>Система охлаждения</option>
+                <option value="Выхлопная система" {% if request.GET.part_type == 'Выхлопная система' %}selected{% endif %}>Выхлопная система</option>
+                <option value="Резиновые и иные уплотнения" {% if request.GET.part_type == 'Резиновые и иные уплотнения' %}selected{% endif %}>Резиновые и иные уплотнения</option>
+                <option value="Детали двигателя" {% if request.GET.part_type == 'Детали двигателя' %}selected{% endif %}>Детали двигателя</option>
+                <option value="Другое для двигателя" {% if request.GET.part_type == 'Другое для двигателя' %}selected{% endif %}>Другое для двигателя</option>
+            </optgroup>
+            <optgroup label="Трансмиссия">
+                <option value="Коробка передач" {% if request.GET.part_type == 'Коробка передач' %}selected{% endif %}>Коробка передач</option>
+                <option value="Карданный вал" {% if request.GET.part_type == 'Карданный вал' %}selected{% endif %}>Карданный вал</option>
+                <option value="Редуктор" {% if request.GET.part_type == 'Редуктор' %}selected{% endif %}>Редуктор</option>
+                <option value="Полуоси" {% if request.GET.part_type == 'Полуоси' %}selected{% endif %}>Полуоси</option>
+                <option value="Ретардер" {% if request.GET.part_type == 'Ретардер' %}selected{% endif %}>Ретардер</option>
+                <option value="Резиновые и иные уплотнения" {% if request.GET.part_type == 'Резиновые и иные уплотнения' %}selected{% endif %}>Резиновые и иные уплотнения</option>
+                <option value="Другое для трансмиссии" {% if request.GET.part_type == 'Другое для трансмиссии' %}selected{% endif %}>Другое для трансмиссии</option>
+            </optgroup>
+            <optgroup label="Пневмосистема">
+                <option value="Воздух для тормозов" {% if request.GET.part_type == 'Воздух для тормозов' %}selected{% endif %}>Воздух для тормозов</option>
+                <option value="Воздух для подвески" {% if request.GET.part_type == 'Воздух для подвески' %}selected{% endif %}>Воздух для подвески</option>
+                <option value="Воздух для дверей и салона" {% if request.GET.part_type == 'Воздух для дверей и салона' %}selected{% endif %}>Воздух для дверей и салона</option>
+                <option value="Другое для пневмосистемы" {% if request.GET.part_type == 'Другое для пневмосистемы' %}selected{% endif %}>Другое для пневмосистемы</option>
+            </optgroup>
+            <optgroup label="Ходовая часть">
+                <option value="Амортизаторы" {% if request.GET.part_type == 'Амортизаторы' %}selected{% endif %}>Амортизаторы</option>
+                <option value="Пружины" {% if request.GET.part_type == 'Пружины' %}selected{% endif %}>Пружины</option>
+                <option value="Рессоры" {% if request.GET.part_type == 'Рессоры' %}selected{% endif %}>Рессоры</option>
+                <option value="Пневмоподушки" {% if request.GET.part_type == 'Пневмоподушки' %}selected{% endif %}>Пневмоподушки</option>
+                <option value="Колесные диски" {% if request.GET.part_type == 'Колесные диски' %}selected{% endif %}>Колесные диски</option>
+                <option value="Шины" {% if request.GET.part_type == 'Шины' %}selected{% endif %}>Шины</option>
+                <option value="Шаровые опоры" {% if request.GET.part_type == 'Шаровые опоры' %}selected{% endif %}>Шаровые опоры</option>
+                <option value="Тяги или рычаги" {% if request.GET.part_type == 'Тяги или рычаги' %}selected{% endif %}>Тяги или рычаги</option>
+                <option value="Сайлентблоки" {% if request.GET.part_type == 'Сайлентблоки' %}selected{% endif %}>Сайлентблоки</option>
+                <option value="Другое для ходовой части" {% if request.GET.part_type == 'Другое для ходовой части' %}selected{% endif %}>Другое для ходовой части</option>
+            </optgroup>
+            <optgroup label="Тормозная система">
+                <option value="Суппорта" {% if request.GET.part_type == 'Суппорта' %}selected{% endif %}>Суппорта</option>
+                <option value="Колодки дисковые" {% if request.GET.part_type == 'Колодки дисковые' %}selected{% endif %}>Колодки дисковые</option>
+                <option value="Колодки барабанные" {% if request.GET.part_type == 'Колодки барабанные' %}selected{% endif %}>Колодки барабанные</option>
+                <option value="Колодки ручника" {% if request.GET.part_type == 'Колодки ручника' %}selected{% endif %}>Колодки ручника</option>
+                <option value="Диски" {% if request.GET.part_type == 'Диски' %}selected{% endif %}>Диски</option>
+                <option value="Барабаны" {% if request.GET.part_type == 'Барабаны' %}selected{% endif %}>Барабаны</option>
+                <option value="Тросы" {% if request.GET.part_type == 'Тросы' %}selected{% endif %}>Тросы</option>
+                <option value="Трубки" {% if request.GET.part_type == 'Трубки' %}selected{% endif %}>Трубки</option>
+                <option value="Другое для тормозной системы" {% if request.GET.part_type == 'Другое для тормозной системы' %}selected{% endif %}>Другое для тормозной системы</option>
+            </optgroup>
+            <optgroup label="Рулевое управление">
+                <option value="Рулевая колонка" {% if request.GET.part_type == 'Рулевая колонка' %}selected{% endif %}>Рулевая колонка</option>
+                <option value="Рулевые тяги" {% if request.GET.part_type == 'Рулевые тяги' %}selected{% endif %}>Рулевые тяги</option>
+                <option value="Усилитель руля" {% if request.GET.part_type == 'Усилитель руля' %}selected{% endif %}>Усилитель руля</option>
+                <option value="Другое для рулевого управления" {% if request.GET.part_type == 'Другое для рулевого управления' %}selected{% endif %}>Другое для рулевого управления</option>
+            </optgroup>
+            <optgroup label="Электрическая система">
+                <option value="Генератор" {% if request.GET.part_type == 'Генератор' %}selected{% endif %}>Генератор</option>
+                <option value="Стартер" {% if request.GET.part_type == 'Стартер' %}selected{% endif %}>Стартер</option>
+                <option value="АКБ" {% if request.GET.part_type == 'АКБ' %}selected{% endif %}>АКБ</option>
+                <option value="Проводка и разъемы" {% if request.GET.part_type == 'Проводка и разъемы' %}selected{% endif %}>Проводка и разъемы</option>
+                <option value="Освещение" {% if request.GET.part_type == 'Освещение' %}selected{% endif %}>Освещение</option>
+                <option value="Приборная панель и электроника управления" {% if request.GET.part_type == 'Приборная панель и электроника управления' %}selected{% endif %}>Приборная панель и электроника управления</option>
+                <option value="Лампочки 24В" {% if request.GET.part_type == 'Лампочки 24В' %}selected{% endif %}>Лампочки 24В</option>
+                <option value="Лампочки 12В" {% if request.GET.part_type == 'Лампочки 12В' %}selected{% endif %}>Лампочки 12В</option>
+                <option value="Предохранители" {% if request.GET.part_type == 'Предохранители' %}selected{% endif %}>Предохранители</option>
+                <option value="Другое для электрики" {% if request.GET.part_type == 'Другое для электрики' %}selected{% endif %}>Другое для электрики</option>
+            </optgroup>
+            <optgroup label="Система кондиционирования и отопления">
+                <option value="Компрессор кондиционера" {% if request.GET.part_type == 'Компрессор кондиционера' %}selected{% endif %}>Компрессор кондиционера</option>
+                <option value="Радиаторы" {% if request.GET.part_type == 'Радиаторы' %}selected{% endif %}>Радиаторы</option>
+                <option value="Вентиляторы" {% if request.GET.part_type == 'Вентиляторы' %}selected{% endif %}>Вентиляторы</option>
+                <option value="Трубки" {% if request.GET.part_type == 'Трубки' %}selected{% endif %}>Трубки</option>
+                <option value="Фреон" {% if request.GET.part_type == 'Фреон' %}selected{% endif %}>Фреон</option>
+                <option value="Другое для конд. и отоп." {% if request.GET.part_type == 'Другое для конд. и отоп.' %}selected{% endif %}>Другое для конд. и отоп.</option>
+            </optgroup>
+            <optgroup label="Кузов">
+                <option value="Каркас кузова" {% if request.GET.part_type == 'Каркас кузова' %}selected{% endif %}>Каркас кузова</option>
+                <option value="Двери и окна" {% if request.GET.part_type == 'Двери и окна' %}selected{% endif %}>Двери и окна</option>
+                <option value="Капот и багажные отсеки" {% if request.GET.part_type == 'Капот и багажные отсеки' %}selected{% endif %}>Капот и багажные отсеки</option>
+                <option value="Зеркала" {% if request.GET.part_type == 'Зеркала' %}selected{% endif %}>Зеркала</option>
+                <option value="Стеклоочистители" {% if request.GET.part_type == 'Стеклоочистители' %}selected{% endif %}>Стеклоочистители</option>
+                <option value="Другое для кузова" {% if request.GET.part_type == 'Другое для кузова' %}selected{% endif %}>Другое для кузова</option>
+            </optgroup>
+            <optgroup label="Салон">
+                <option value="Сиденья" {% if request.GET.part_type == 'Сиденья' %}selected{% endif %}>Сиденья</option>
+                <option value="Обивка и декоративные панели" {% if request.GET.part_type == 'Обивка и декоративные панели' %}selected{% endif %}>Обивка и декоративные панели</option>
+                <option value="Пол и потолок" {% if request.GET.part_type == 'Пол и потолок' %}selected{% endif %}>Пол и потолок</option>
+                <option value="Система безопасности" {% if request.GET.part_type == 'Система безопасности' %}selected{% endif %}>Система безопасности</option>
+                <option value="Аудио- и видеосистемы" {% if request.GET.part_type == 'Аудио- и видеосистемы' %}selected{% endif %}>Аудио- и видеосистемы</option>
+                <option value="Другое для салона" {% if request.GET.part_type == 'Другое для салона' %}selected{% endif %}>Другое для салона</option>
+            </optgroup>
+            <optgroup label="Детали для ТО">
+                <option value="Ремень генератора" {% if request.GET.part_type == 'Ремень генератора' %}selected{% endif %}>Ремень генератора</option>
+                <option value="Ремень кондиционера" {% if request.GET.part_type == 'Ремень кондиционера' %}selected{% endif %}>Ремень кондиционера</option>
+                <option value="Приводной ремень" {% if request.GET.part_type == 'Приводной ремень' %}selected{% endif %}>Приводной ремень</option>
+                <option value="Фильтр топливный" {% if request.GET.part_type == 'Фильтр топливный' %}selected{% endif %}>Фильтр топливный</option>
+                <option value="Фильтр масляный" {% if request.GET.part_type == 'Фильтр масляный' %}selected{% endif %}>Фильтр масляный</option>
+                <option value="Фильтр воздушный" {% if request.GET.part_type == 'Фильтр воздушный' %}selected{% endif %}>Фильтр воздушный</option>
+                <option value="Фильтр пневмосистемы" {% if request.GET.part_type == 'Фильтр пневмосистемы' %}selected{% endif %}>Фильтр пневмосистемы</option>
+                <option value="Фильтр салона" {% if request.GET.part_type == 'Фильтр салона' %}selected{% endif %}>Фильтр салона</option>
+                <option value="Иной фильтр" {% if request.GET.part_type == 'Иной фильтр' %}selected{% endif %}>Иной фильтр</option>
+                <option value="Другое для ТО" {% if request.GET.part_type == 'Другое для ТО' %}selected{% endif %}>Другое для ТО</option>
+            </optgroup>
+            <optgroup label="Жидкости">
+                <option value="Моторное масло" {% if request.GET.part_type == 'Моторное масло' %}selected{% endif %}>Моторное масло</option>
+                <option value="Трансмиссионное масло" {% if request.GET.part_type == 'Трансмиссионное масло' %}selected{% endif %}>Трансмиссионное масло</option>
+                <option value="Тормозная жидкость" {% if request.GET.part_type == 'Тормозная жидкость' %}selected{% endif %}>Тормозная жидкость</option>
+                <option value="Антифриз" {% if request.GET.part_type == 'Антифриз' %}selected{% endif %}>Антифриз</option>
+                <option value="Омывающая жидкость" {% if request.GET.part_type == 'Омывающая жидкость' %}selected{% endif %}>Омывающая жидкость</option>
+                <option value="Другие жидкости" {% if request.GET.part_type == 'Другие жидкости' %}selected{% endif %}>Другие жидкости</option>
+            </optgroup>
+        </select>
+
+        <button type="submit" class="btn-filter">Фильтровать</button>
+    </form>
 </div>
 
 <!-- Кнопка для добавления записи -->
@@ -83,14 +217,38 @@
         <tr>
             <th class="center-text">Наличие</th>
             <th class="center-text">Артикул</th>
-            <th>Название</th>
+             <th>
+                Название
+                <div class="sort-buttons">
+                    <form method="get" style="display: inline;">
+                        <input type="hidden" name="sort_by" value="name">
+                        <input type="hidden" name="order" value="asc">
+                        <button type="submit">⬆️</button>
+                    </form>
+                    <form method="get" style="display: inline;">
+                        <input type="hidden" name="sort_by" value="name">
+                        <input type="hidden" name="order" value="desc">
+                        <button type="submit">⬇️</button>
+                    </form>
+                </div>
+            </th>
+            <th class="center-text">Размер</th>
             <th class="center-text">
                 Количество
                 <div class="sort-buttons">
-                    <button id="sortAscBtn">⬆️</button>
-                    <button id="sortDescBtn">⬇️</button>
+                    <form method="get" style="display: inline;">
+                        <input type="hidden" name="sort_by" value="quantity">
+                        <input type="hidden" name="order" value="asc">
+                        <button type="submit">⬆️</button>
+                    </form>
+                    <form method="get" style="display: inline;">
+                        <input type="hidden" name="sort_by" value="quantity">
+                        <input type="hidden" name="order" value="desc">
+                        <button type="submit">⬇️</button>
+                    </form>
                 </div>
             </th>
+
             <th>Марка</th>
             <th>Модель</th>
             <th>Производитель</th>
@@ -103,12 +261,13 @@
                 <td class="center-text">
                     <span class="{% if item.quantity == 0 %}availability-red{% elif item.quantity == 1 %}availability-yellow{% elif item.quantity > 1 %}availability-green{% endif %}"></span>
                 </td>
-                <td>{{ item.article }}</td>
-                <td>{{ item.name }}</td>
+                <td class="center-text">{{ item.article }}</td>
+                <td class="center-text">{{ item.name }}</td>
+                <td class="center-text">{{ item.size }}</td>
                 <td class="center-text">{{ item.quantity }}</td>
-                <td>{{ item.brand }}</td>
-                <td>{{ item.model }}</td>
-                <td>{{ item.manufacturer }}</td>
+                <td class="center-text">{{ item.brand }}</td>
+                <td class="center-text">{{ item.model }}</td>
+                <td class="center-text">{{ item.manufacturer }}</td>
                 <td>
                     <a href="{% url 'warehouse_item_edit' item_id=item.id %}" class="btn">Edit</a>
                     <a href="{% url 'delete_item' item_id=item.id %}" class="btn btn-delete" onclick="return confirm('Вы уверены, что хотите удалить этот элемент?');">Delete</a>
@@ -143,12 +302,17 @@ document.getElementById('searchInput').addEventListener('keyup', function() {
 });
 
 // JavaScript для сортировки
-document.getElementById('sortAscBtn').addEventListener('click', function() {
-    sortTable(true);
+document.getElementById('sortNameAscBtn').addEventListener('click', function() {
+    sortTable('name', true);
 });
-
-document.getElementById('sortDescBtn').addEventListener('click', function() {
-    sortTable(false);
+document.getElementById('sortNameDescBtn').addEventListener('click', function() {
+    sortTable('name', false);
+});
+document.getElementById('sortQuantityAscBtn').addEventListener('click', function() {
+    sortTable('quantity', true);
+});
+document.getElementById('sortQuantityDescBtn').addEventListener('click', function() {
+    sortTable('quantity', false);
 });
 
 function sortTable(ascending) {
@@ -160,17 +324,31 @@ function sortTable(ascending) {
         rows = table.rows;
         for (i = 1; i < (rows.length - 1); i++) {
             shouldSwitch = false;
-            x = rows[i].getElementsByTagName('td')[3];
-            y = rows[i + 1].getElementsByTagName('td')[3];
+            x = rows[i].getElementsByTagName('td')[column === 'name' ? 2 : 3];  // 2 - name, 3 - quantity
+            y = rows[i + 1].getElementsByTagName('td')[column === 'name' ? 2 : 3];
             if (ascending) {
-                if (parseInt(x.innerHTML) > parseInt(y.innerHTML)) {
-                    shouldSwitch = true;
-                    break;
+                if (column === 'name') {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else {
+                    if (parseInt(x.innerHTML) > parseInt(y.innerHTML)) {
+                        shouldSwitch = true;
+                        break;
+                    }
                 }
             } else {
-                if (parseInt(x.innerHTML) < parseInt(y.innerHTML)) {
-                    shouldSwitch = true;
-                    break;
+                if (column === 'name') {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else {
+                    if (parseInt(x.innerHTML) < parseInt(y.innerHTML)) {
+                        shouldSwitch = true;
+                        break;
+                    }
                 }
             }
         }

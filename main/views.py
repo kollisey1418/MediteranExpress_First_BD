@@ -3,7 +3,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from .models import (Item, EngineParts, TransmissionParts, PneumaticParts, ChassisParts,
-BrakeParts, SteeringParts, ElectricityParts, ClimateParts, CarBodyParts, InteriorParts, MaintenanceParts, LiquidsParts)
+BrakeParts, SteeringParts, ElectricityParts, ClimateParts, CarBodyParts, InteriorParts, MaintenanceParts, LiquidsParts, Brand, Model)
 from .forms import ItemForm
 import logging
 
@@ -16,15 +16,49 @@ def garage(request):
     return render(request, 'main/garage.html')
 
 def warehouse_new(request):
-    items = Item.objects.all()
-    return render(request, 'main/warehouse_new.html', {'items': items})
+    sort_by = request.GET.get('sort_by', 'name')  # Default sorting by name
+    order = request.GET.get('order', 'asc')  # Default order is ascending
 
+    if order == 'desc':
+        sort_by = '-' + sort_by
+
+    items = Item.objects.all()
+
+    # Фильтрация по бренду
+    brand_name = request.GET.get('brand')
+    if brand_name:
+        items = items.filter(brand=brand_name)
+
+    # Фильтрация по модели
+    model_name = request.GET.get('model')
+    if model_name:
+        items = items.filter(model=model_name)
+
+    # Фильтрация по типу запчасти
+    part_type = request.GET.get('part_type')
+    if part_type:
+        items = items.filter(part_type=part_type)
+
+    items = items.order_by(sort_by)
+
+    brands = Brand.objects.all()
+    models = Model.objects.all()
+
+    context = {
+        'items': items,
+        'brands': brands,
+        'models': models,
+        'order': order,
+    }
+    return render(request, 'main/warehouse_new.html', context)
 def autopark(request):
     return render(request, 'main/autopark.html')
 
 def add_item_form(request):
     form = ItemForm()
-    return render(request, 'main/add_item_form.html', {'form': form})
+    brands = Brand.objects.all()
+    models = Model.objects.all()
+    return render(request, 'main/add_item_form.html', {'form': form, 'brands': brands, 'models': models})
 
 def add_item(request):
     logger.debug(f"Метод запроса: {request.method}")
@@ -40,14 +74,18 @@ def add_item(request):
             logger.debug("Форма валидна")
             article = form.cleaned_data['article']
             name = form.cleaned_data['name']
+            size = form.cleaned_data['size']
             quantity = form.cleaned_data['quantity']
-            brand = form.cleaned_data['brand']
-            model = form.cleaned_data['model']
+            brand_id = form.cleaned_data['brand'].id
+            model_id = form.cleaned_data['model'].id
             manufacturer = form.cleaned_data['manufacturer']
             part_type = form.cleaned_data['part_type']
 
+            brand = Brand.objects.get(id=brand_id)
+            model = Model.objects.get(id=model_id)
+
             try:
-                item = Item.objects.get(article=form.cleaned_data['article'])
+                item = Item.objects.get(article=article)
                 logger.debug(f"Найдена существующая деталь с артикулом {article}")
                 item.quantity += quantity
                 item.save()
@@ -56,6 +94,8 @@ def add_item(request):
                     logger.debug("Создание нового объекта запчасти")
                     item = form.save(commit=False)
                     item.availability = 'green'  # Установите значение поля "Наличие" по умолчанию
+                    item.brand = brand
+                    item.model = model
 
                     # Создаем новый объект запчасти и соответствующий объект категории
                     if 'Топливная система' in part_type or 'Система охлаждения' in part_type or 'Выхлопная система' in part_type or 'Резиновые и иные уплотнения' in part_type or 'Детали двигателя' in part_type or 'Другое для двигателя' in part_type:
@@ -63,21 +103,21 @@ def add_item(request):
                             article=form.cleaned_data['article'],
                             name=form.cleaned_data['name'],
                             quantity=form.cleaned_data['quantity'],
-                            brand=form.cleaned_data['brand'],
-                            model=form.cleaned_data['model'],
+                            brand=brand_id,
+                            model=model_id,
                             manufacturer=form.cleaned_data['manufacturer'],
                             part_type=part_type
                         )
                         item.engine_part = engine_part
                         logger.debug(f"Создан объект EngineParts: {engine_part}")
 
-                    elif 'Коробка передач' in part_type or 'Карданный вал' in part_type or 'Редуктор' in part_type or 'Полуоси' in part_type or 'Ретардер' in part_type or 'Резиновые и иные уплотнения' in part_type or 'Дугое для трансмиссии' in part_type:
+                    elif 'Коробка передач' in part_type or 'Карданный вал' in part_type or 'Редуктор' in part_type or 'Полуоси' in part_type or 'Ретардер' in part_type or 'Резиновые и иные уплотнения' in part_type or 'Другое для трансмиссии' in part_type:
                         transmission_part = TransmissionParts.objects.create(
                             article=form.cleaned_data['article'],
                             name=form.cleaned_data['name'],
                             quantity=form.cleaned_data['quantity'],
-                            brand=form.cleaned_data['brand'],
-                            model=form.cleaned_data['model'],
+                            brand=brand_id,
+                            model=model_id,
                             manufacturer=form.cleaned_data['manufacturer'],
                             part_type=part_type
                         )
@@ -88,8 +128,8 @@ def add_item(request):
                             article=form.cleaned_data['article'],
                             name=form.cleaned_data['name'],
                             quantity=form.cleaned_data['quantity'],
-                            brand=form.cleaned_data['brand'],
-                            model=form.cleaned_data['model'],
+                            brand=brand_id,
+                            model=model_id,
                             manufacturer=form.cleaned_data['manufacturer'],
                             part_type=part_type
                         )
@@ -100,8 +140,8 @@ def add_item(request):
                             article=form.cleaned_data['article'],
                             name=form.cleaned_data['name'],
                             quantity=form.cleaned_data['quantity'],
-                            brand=form.cleaned_data['brand'],
-                            model=form.cleaned_data['model'],
+                            brand=brand_id,
+                            model=model_id,
                             manufacturer=form.cleaned_data['manufacturer'],
                             part_type=part_type
                         )
@@ -112,44 +152,44 @@ def add_item(request):
                             article=form.cleaned_data['article'],
                             name=form.cleaned_data['name'],
                             quantity=form.cleaned_data['quantity'],
-                            brand=form.cleaned_data['brand'],
-                            model=form.cleaned_data['model'],
+                            brand=brand_id,
+                            model=model_id,
                             manufacturer=form.cleaned_data['manufacturer'],
                             part_type=part_type
                         )
                         item.brake_parts = brake_parts
 
-                    elif 'Рулевая колонка' in part_type or 'Рулевые тяги' in part_type or 'Усилитель руля' in part_type or 'Другое для для рулевого управления' in part_type:
+                    elif 'Рулевая колонка' in part_type or 'Рулевые тяги' in part_type or 'Усилитель руля' in part_type or 'Другое для рулевого управления' in part_type:
                         steering_parts = SteeringParts.objects.create(
                             article=form.cleaned_data['article'],
                             name=form.cleaned_data['name'],
                             quantity=form.cleaned_data['quantity'],
-                            brand=form.cleaned_data['brand'],
-                            model=form.cleaned_data['model'],
+                            brand=brand_id,
+                            model=model_id,
                             manufacturer=form.cleaned_data['manufacturer'],
                             part_type=part_type
                         )
                         item.steering_parts = steering_parts
 
-                    elif 'Генератор' in part_type or 'Стартер' in part_type or 'АКБ' in part_type or 'Проводка и разъемы' in part_type or 'Освещение' in part_type or 'Приборная панель и электроника управления' in part_type or 'Лампочки 24В' in part_type or 'Лампочки 12В' in part_type or 'Предохранители' in part_type or 'Другое для для электрики' in part_type:
+                    elif 'Генератор' in part_type or 'Стартер' in part_type or 'АКБ' in part_type or 'Проводка и разъемы' in part_type or 'Освещение' in part_type or 'Приборная панель и электроника управления' in part_type or 'Лампочки 24В' in part_type or 'Лампочки 12В' in part_type or 'Предохранители' in part_type or 'Другое для электрики' in part_type:
                         electricity_parts = ElectricityParts.objects.create(
                             article=form.cleaned_data['article'],
                             name=form.cleaned_data['name'],
                             quantity=form.cleaned_data['quantity'],
-                            brand=form.cleaned_data['brand'],
-                            model=form.cleaned_data['model'],
+                            brand=brand_id,
+                            model=model_id,
                             manufacturer=form.cleaned_data['manufacturer'],
                             part_type=part_type
                         )
                         item.electricity_parts = electricity_parts
 
-                    elif 'Компрессор кондиционера' in part_type or 'Радиаторы' in part_type or 'Вентиляторы' in part_type or 'Трубки' in part_type or 'Фрион' in part_type or 'Другое для конд. и отоп.' in part_type:
+                    elif 'Компрессор кондиционера' in part_type or 'Радиаторы' in part_type or 'Вентиляторы' in part_type or 'Трубки' in part_type or 'Фреон' in part_type or 'Другое для конд. и отоп.' in part_type:
                         climate_parts = ClimateParts.objects.create(
                             article=form.cleaned_data['article'],
                             name=form.cleaned_data['name'],
                             quantity=form.cleaned_data['quantity'],
-                            brand=form.cleaned_data['brand'],
-                            model=form.cleaned_data['model'],
+                            brand=brand_id,
+                            model=model_id,
                             manufacturer=form.cleaned_data['manufacturer'],
                             part_type=part_type
                         )
@@ -160,20 +200,20 @@ def add_item(request):
                             article=form.cleaned_data['article'],
                             name=form.cleaned_data['name'],
                             quantity=form.cleaned_data['quantity'],
-                            brand=form.cleaned_data['brand'],
-                            model=form.cleaned_data['model'],
+                            brand=brand_id,
+                            model=model_id,
                             manufacturer=form.cleaned_data['manufacturer'],
                             part_type=part_type
                         )
                         item.car_body_parts = car_body_parts
 
-                    elif 'Сиденья' in part_type or 'Обивка и декоративные панели' in part_type or 'Пол и потолок' in part_type or 'Система безопасности' in part_type or 'Аудио- и видеосистемы' in part_type or 'Другое для салона' or part_type:
+                    elif 'Сиденья' in part_type or 'Обивка и декоративные панели' in part_type or 'Пол и потолок' in part_type or 'Система безопасности' in part_type or 'Аудио- и видеосистемы' in part_type or 'Другое для салона' in part_type:
                         interior_parts = InteriorParts.objects.create(
                             article=form.cleaned_data['article'],
                             name=form.cleaned_data['name'],
                             quantity=form.cleaned_data['quantity'],
-                            brand=form.cleaned_data['brand'],
-                            model=form.cleaned_data['model'],
+                            brand=brand_id,
+                            model=model_id,
                             manufacturer=form.cleaned_data['manufacturer'],
                             part_type=part_type
                         )
@@ -184,8 +224,8 @@ def add_item(request):
                             article=form.cleaned_data['article'],
                             name=form.cleaned_data['name'],
                             quantity=form.cleaned_data['quantity'],
-                            brand=form.cleaned_data['brand'],
-                            model=form.cleaned_data['model'],
+                            brand=brand_id,
+                            model=model_id,
                             manufacturer=form.cleaned_data['manufacturer'],
                             part_type=part_type
                         )
@@ -196,8 +236,8 @@ def add_item(request):
                             article=form.cleaned_data['article'],
                             name=form.cleaned_data['name'],
                             quantity=form.cleaned_data['quantity'],
-                            brand=form.cleaned_data['brand'],
-                            model=form.cleaned_data['model'],
+                            brand=brand_id,
+                            model=model_id,
                             manufacturer=form.cleaned_data['manufacturer'],
                             part_type=part_type
                         )
@@ -209,14 +249,16 @@ def add_item(request):
 
                 except Exception as e:
                     logger.error("Ошибка при сохранении новой детали: %s", e)
-                    return HttpResponse('<script>alert("Ошибка при добавлении записи. Проверьте данные и попробуйте снова.");</script>')
-        else:
-            logger.error("Форма недействительна: %s", form.errors)
-            return HttpResponse('<script>alert("Ошибка при добавлении записи. Проверьте данные и попробуйте снова.");</script>')
+                    return HttpResponse(
+                        '<script>alert("Ошибка при добавлении записи. Проверьте данные и попробуйте снова.");</script>')
+            else:
+                logger.error("Форма недействительна: %s", form.errors)
+                return HttpResponse(
+                        '<script>alert("Ошибка при добавлении записи. Проверьте данные и попробуйте снова.");</script>')
 
-    else:
-        logger.error("Некорректный метод запроса")
-        return HttpResponse('<script>alert("Некорректный метод запроса.");</script>')
+        else:
+            logger.error("Некорректный метод запроса")
+            return HttpResponse('<script>alert("Некорректный метод запроса.");</script>')
 
 def edit_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
