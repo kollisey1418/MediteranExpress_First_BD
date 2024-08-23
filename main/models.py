@@ -1,10 +1,81 @@
 from django.db import models
+from django.utils import timezone
 
 class Brand(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
+
+class Car(models.Model):
+    STATUS_CHOICES = [
+        ('Исправен на линии', 'Исправен на линии'),
+        ('Неисправен на линии', 'Неисправен на линии'),
+        ('В ремонте', 'В ремонте'),
+        ('Утиль', 'Утиль'),
+    ]
+    brand = models.CharField(max_length=100)  # Марка автомобиля
+    model = models.CharField(max_length=100)  # Модель автомобиля
+    vin_code = models.CharField(max_length=17, unique=True, primary_key=True)  # Вин-код
+    engine_number = models.CharField(max_length=100)  # Номер двигателя
+    engine_volume = models.DecimalField(max_digits=5, decimal_places=2)  # Объем двигателя
+    year_of_manufacture = models.IntegerField()  # Год выпуска
+    mileage = models.IntegerField(default=0)  # Пробег
+    gearbox_type = models.CharField(max_length=50)  # Вид КПП
+    state_number = models.CharField(max_length=20)  # Госномер
+    status = models.CharField(max_length=50)  # Статус
+
+    def __str__(self):
+        return f"{self.brand} {self.model} ({self.vin_code})"
+
+class WorkPerformed(models.Model):
+    vin_code = models.ForeignKey(Car, on_delete=models.CASCADE)
+    mileage = models.IntegerField()
+    work_name = models.CharField(max_length=255)
+    used_parts = models.CharField(max_length=255)
+    quantity = models.IntegerField()
+    article = models.CharField(max_length=255)
+    date = models.DateTimeField(default=timezone.now)
+
+    from django.db import models
+
+class Work(models.Model):
+    car = models.ForeignKey(Car, on_delete=models.CASCADE)
+    date = models.DateField()
+    mileage = models.IntegerField()
+    description = models.TextField()
+    part_article = models.CharField(max_length=100, blank=True, null=True)
+    part_name = models.CharField(max_length=100, blank=True, null=True)
+    part_manufacturer = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.date} - {self.work_name} ({self.vin_code})"
+
+class Recommendation(models.Model):
+    date = models.DateField()  # Дата
+    vin_code = models.ForeignKey(Car, on_delete=models.CASCADE)  # Вин-код
+    recommendation = models.TextField()  # Рекомендации
+
+    def __str__(self):
+        return f"{self.date} - {self.recommendation}"
+
+class DriverComplaint(models.Model):
+    date = models.DateField()  # Дата
+    vin_code = models.ForeignKey(Car, on_delete=models.CASCADE)  # Вин-код
+    complaint_text = models.TextField()  # Текст жалобы
+
+    def __str__(self):
+        return f"{self.date} - {self.complaint_text}"
+
+class Fault(models.Model):
+    vin_code = models.ForeignKey(Car, on_delete=models.CASCADE)  # Вин-код
+    description = models.CharField(max_length=255)  # Неисправность
+    date = models.DateField(auto_now_add=True)  # Дата
+    criticality = models.CharField(max_length=50)  # Критичность
+    mileage = models.IntegerField()  # Пробег
+
+    def __str__(self):
+        return f"{self.date} - {self.description} ({self.criticality})"
 
 class Model(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -13,7 +84,6 @@ class Model(models.Model):
     def __str__(self):
         return self.name
 
-# Новые модели для категорий запчастей
 class EngineParts(models.Model):
     availability = models.BooleanField(default=True)
     article = models.CharField(max_length=100)
@@ -170,13 +240,12 @@ class LiquidsParts(models.Model):
     def __str__(self):
         return self.name
 
-
 class Item(models.Model):
     availability = models.CharField(max_length=10, default='green', blank=True)
-    article = models.CharField(max_length=100)
+    article = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=100)
     size = models.CharField(max_length=100, blank=True, null=True)
-    quantity = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField(default=0)
     brand = models.CharField(max_length=100)
     model = models.CharField(max_length=100)
     manufacturer = models.CharField(max_length=100)

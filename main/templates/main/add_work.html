@@ -1,0 +1,29 @@
+<form method="post" action="{% url 'save_work' vin_code=vin_code %}">
+    {% csrf_token %}
+    <div>
+        <label for="work-date">Дата:</label>
+        <input type="date" id="work-date" name="date" required>
+    </div>
+    <div>
+        <label for="work-mileage">Пробег:</label>
+        <input type="number" id="work-mileage" name="mileage" required>
+    </div>
+    <div>
+        <label for="work-description">Описание:</label>
+        <textarea id="work-description" name="description" required></textarea>
+    </div>
+    <div>
+        <label for="part-article">Артикул запчасти:</label>
+        <input type="text" id="part-article" name="part_article">
+        <button type="button" onclick="searchPart()">Поиск запчасти</button>
+    </div>
+    <div>
+        <label for="part-name">Название запчасти:</label>
+        <input type="text" id="part-name" name="part_name">
+    </div>
+    <div>
+        <label for="part-manufacturer">Производитель запчасти:</label>
+        <input type="text" id="part-manufacturer" name="part_manufacturer">
+    </div>
+    <button type="submit">Сохранить</button>
+</form>

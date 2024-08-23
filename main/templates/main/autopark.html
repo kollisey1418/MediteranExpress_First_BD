@@ -1,10 +1,52 @@
-<!-- main/templates/main/autopark.html -->
-
-{% extends 'main/base.html' %}
-
-{% block title %}Автопарк{% endblock %}
-
-{% block content %}
-<h1>Автопарк</h1>
-<p>Это страница автопарка.</p>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Автопарк</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        .add-car-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 18px;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            background-color: #007bff;
+            border-radius: 5px;
+            width: 200px;
+        }
+        .car-item {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            text-decoration: none;
+            color: #000;
+            display: block;
+        }
+        .car-item:hover {
+            background-color: #e2e6ea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Автопарк</h1>
+        <a href="{% url 'add_car' %}" class="add-car-button">Добавить автомобиль</a>
+        <div>
+            {% for car in cars %}
+                <a href="{% url 'car_detail' car.vin_code %}" class="car-item">
+                    {{ car.brand }} {{ car.model }} - {{ car.state_number }}
+                </a>
+            {% empty %}
+                <p>Нет автомобилей в автопарке.</p>
+            {% endfor %}
+        </div>
+        <a href="{% url 'home' %}">Назад на главную</a>
+    </div>
+</body>
+</html>

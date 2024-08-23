@@ -1,14 +1,72 @@
 # main/views.py
 
+import requests
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from .models import (Item, EngineParts, TransmissionParts, PneumaticParts, ChassisParts,
-BrakeParts, SteeringParts, ElectricityParts, ClimateParts, CarBodyParts, InteriorParts, MaintenanceParts, LiquidsParts, Brand, Model)
-from .forms import ItemForm
+BrakeParts, SteeringParts, ElectricityParts, ClimateParts, CarBodyParts, InteriorParts, MaintenanceParts, LiquidsParts, Brand, Model, Car, WorkPerformed, Fault, Work)
+from .forms import ItemForm, CarForm, WorkForm, FaultForm
+from django.db.models import Q
+from django.db import connection
+from django.forms import formset_factory
+from django.forms import modelformset_factory
+from django.utils import timezone
 import logging
 
 logger = logging.getLogger(__name__)
 
+NHTSA_API_URL = "https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesBatch/"
+WorkFormSet = modelformset_factory(WorkPerformed, form=WorkForm, extra=1)
+def get_car_info_by_vin(vin_code):
+    try:
+        response = requests.post(NHTSA_API_URL, data={'format': 'json', 'data': vin_code})
+        response.raise_for_status()
+        data = response.json().get('Results', [{}])[0]
+
+        car_info = {
+            'brand': data.get('Make', 'Unknown'),
+            'model': data.get('Model', 'Unknown'),
+            'mileage': 0,  # Замените на соответствующее поле, если есть
+            'state_number': '',  # Замените на соответствующее поле, если есть
+            'other_data': data.get('VehicleType', 'No additional information available')
+        }
+        return car_info
+    except requests.RequestException as e:
+        logger.error(f"Error fetching car data for VIN {vin_code}: {e}")
+        return {
+            'brand': 'Unknown',
+            'model': 'Unknown',
+            'mileage': 0,
+            'state_number': '',
+            'other_data': 'No additional information available'
+        }
+
+def work_detail(request, work_id):
+    work = get_object_or_404(WorkPerformed, id=work_id)
+    return render(request, 'main/work_detail.html', {'work': work})
+
+def fault_detail(request, fault_id):
+    fault = get_object_or_404(Fault, id=fault_id)
+    return render(request, 'main/fault_detail.html', {'fault': fault})
+def car_detail(request, vin_code):
+    # Получаем объект автомобиля
+    car = get_object_or_404(Car, vin_code=vin_code)
+
+    # Генерируем имя таблицы на основе VIN-кода
+    vin_code_table = f"work_{vin_code.replace('-', '_')}"
+
+    # Извлекаем данные о работах из соответствующей таблицы
+    with connection.cursor() as cursor:
+        cursor.execute(f"SELECT date, mileage, work_name, part_name, quantity, article FROM {vin_code_table}")
+        work_records = cursor.fetchall()
+
+    # Подготавливаем данные для шаблона
+    context = {
+        'car': car,
+        'works': work_records,  # Передаем работы в шаблон
+    }
+
+    return render(request, 'main/car_detail.html', context)
 def home(request):
     return render(request, 'main/home.html')
 
@@ -51,9 +109,167 @@ def warehouse_new(request):
         'order': order,
     }
     return render(request, 'main/warehouse_new.html', context)
-def autopark(request):
-    return render(request, 'main/autopark.html')
 
+def autopark(request):
+    cars = Car.objects.all()
+    query = request.GET.get('q')
+    if query:
+        cars = cars.filter(
+            Q(brand__icontains=query) |
+            Q(model__icontains=query) |
+            Q(vin_code__icontains=query) |
+            Q(state_number__icontains=query)
+        )
+    return render(request, 'main/autopark.html', {'cars': cars})
+
+
+def add_car(request):
+    if request.method == 'POST':
+        form = CarForm(request.POST)
+        if form.is_valid():
+
+            car = form.save()
+
+            vin_code_table = f"work_{car.vin_code.replace('-', '_')}"
+
+            from django.db import connection
+            with connection.cursor() as cursor:
+                cursor.execute(f"""
+                CREATE TABLE IF NOT EXISTS {vin_code_table} (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    date TEXT NOT NULL,
+                    mileage INTEGER NOT NULL,
+                    work_name TEXT NOT NULL,
+                    part_name TEXT,
+                    quantity INTEGER,
+                    article TEXT
+                );
+                """)
+    else:
+        form = CarForm()
+
+    # Если запрос не POST, отображаем форму для добавления автомобиля
+    return render(request, 'main/add_car.html', {'form': form})
+
+
+def edit_car(request, vin_code):
+    car = get_object_or_404(Car, vin_code=vin_code)
+    if request.method == 'POST':
+        form = CarForm(request.POST, instance=car)
+        if form.is_valid():
+            form.save()
+            return redirect('car_detail', vin_code=vin_code)
+    else:
+        form = CarForm(instance=car)
+    return render(request, 'main/edit_car.html', {'form': form})
+
+
+def add_work(request, vin_code):
+    car = get_object_or_404(Car, vin_code=vin_code)
+    if request.method == 'POST':
+        form = WorkForm(request.POST)
+        if form.is_valid():
+            work_data = form.cleaned_data
+
+            # Генерируем имя таблицы на основе VIN-кода автомобиля
+            vin_code_table = f"work_{vin_code.replace('-', '_')}"
+
+            # Вставляем данные в таблицу
+            from django.db import connection
+            with connection.cursor() as cursor:
+                cursor.execute(f"""
+                INSERT INTO {vin_code_table} (date, mileage, work_name, part_name, quantity, article)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """, [
+                    work_data['date'] if 'date' in work_data else timezone.now(),
+                    work_data['mileage'],
+                    work_data['work_name'],
+                    work_data.get('part_name', ''),
+                    work_data.get('quantity', 1),
+                    work_data.get('article', '')
+                ])
+
+            return redirect('car_detail', vin_code=vin_code)
+    else:
+        form = WorkForm()
+    return render(request, 'main/add_work.html', {'form': form, 'car': car, 'vin_code': vin_code})
+
+
+def search_part(request):
+    article = request.GET.get('article')
+    try:
+        part = Item.objects.get(article=article)
+        data = {
+            'part': {
+                'name': part.name,
+                'manufacturer': part.manufacturer,
+            }
+        }
+    except Item.DoesNotExist:
+        data = {'part': None}
+    return JsonResponse(data)
+
+
+def save_work(request, vin_code):
+    if request.method == 'POST':
+        car = get_object_or_404(Car, vin_code=vin_code)
+        date = request.POST.get('date')
+        mileage = request.POST.get('mileage')
+        description = request.POST.get('description')
+        part_article = request.POST.get('part_article')
+        part_name = request.POST.get('part_name')
+        part_manufacturer = request.POST.get('part_manufacturer')
+
+        # Сохранение работы в основной таблице Work
+        work = Work(
+            car=car,
+            date=date,
+            mileage=mileage,
+            description=description,
+            part_article=part_article,
+            part_name=part_name,
+            part_manufacturer=part_manufacturer
+        )
+        work.save()
+
+        # Генерация имени таблицы на основе VIN-кода
+        vin_code_table = f"work_{vin_code.replace('-', '_')}"
+
+        # Вставка данных в соответствующую таблицу на основе VIN-кода
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+            INSERT INTO {vin_code_table} (date, mileage, work_name, part_name, quantity, article)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """, [
+                date,
+                mileage,
+                description,
+                part_name,
+                1,  # Если количество не указано, используем 1 по умолчанию
+                part_article
+            ])
+
+        # Перенаправление на страницу с деталями автомобиля после сохранения работы
+        return redirect('car_detail', vin_code=vin_code)
+
+def add_fault(request, vin_code):
+    car = get_object_or_404(Car, vin_code=vin_code)
+    FaultFormSet = modelformset_factory(Fault, form=FaultForm, extra=1, can_delete=True)
+    if request.method == 'POST':
+        formset = FaultFormSet(request.POST, queryset=Fault.objects.none())
+        if formset.is_valid():
+            for form in formset:
+                fault = form.save(commit=False)
+                fault.vin_code = car
+                fault.date = timezone.now()
+                if fault.mileage < car.mileage:
+                    form.add_error('mileage', 'Пробег не может быть меньше текущего пробега автомобиля.')
+                else:
+                    fault.save()
+            return redirect('car_detail', vin_code=vin_code)
+    else:
+        formset = FaultFormSet(queryset=Fault.objects.none())
+    return render(request, 'main/add_fault.html', {'formset': formset, 'car': car})
 def add_item_form(request):
     form = ItemForm()
     brands = Brand.objects.all()

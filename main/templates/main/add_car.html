@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Добавить автомобиль</title>
+     <script>
+        function toUpperCaseInput(event) {
+            event.target.value = event.target.value.toUpperCase();
+        }
+    </script>
+</head>
+<body>
+    <h1>Добавить автомобиль</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+         <input type="text" name="vin_code" id="id_vin_code" oninput="toUpperCaseInput(event)">
+        <button type="submit">Сохранить</button>
+    </form>
+    <a href="{% url 'autopark' %}">Назад к автопарку</a>
+</body>
+</html>

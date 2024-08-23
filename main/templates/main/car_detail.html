@@ -1,0 +1,316 @@
+{% extends 'main/base.html' %}
+{% block title %}Карточка автомобиля - MediteranExpress{% endblock %}
+
+{% block content %}
+<style>
+    /* Стили остаются в блоке content, сразу после его начала */
+    .container {
+        width: 80%;
+        margin: 10px;
+    }
+    .car-info {
+        margin-bottom: 20px;
+    }
+    .car-details {
+        display: flex;
+        justify-content: space-between;
+    }
+    .car-detail {
+        width: 45%;
+    }
+    .scrollable-container {
+        display: flex;
+        justify-content: space-between;
+    }
+    .scrollable {
+        width: 100%;
+        height: 300px;
+        overflow-y: auto;
+    }
+    .works-container,
+    .faults-container {
+        width: 49%;
+    }
+    .card {
+        margin-bottom: 10px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+    }
+    .popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        display: none;
+        z-index: 10;
+        max-width: 500px;
+        width: 100%;
+    }
+    .work-table-container {
+    margin-top: 20px;
+    margin-left: 0px; /* Минимальный отступ слева */
+    width: 60%; /* Уменьшение ширины таблицы на 40% */
+    display: grid;
+    grid-template-columns: 150px 100px 100px 150px 100px 100px; /* Установите размеры колонок, соответствующие столбцам таблицы */
+    gap: 10px;
+    margin-bottom: 20px;
+}
+    .work-table {
+    width: 100%; /* Таблица занимает всю ширину контейнера */
+    border-collapse: collapse;
+    }
+    .work-table th, .work-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    .work-table th {
+        cursor: pointer;
+        background-color: #f2f2f2;
+    }
+    .work-table th:hover {
+        background-color: #ddd;
+    }
+
+.filters-grid {
+    display: contents; /* Отображаем дочерние элементы в виде сетки, чтобы они следовали за колонками таблицы */
+}
+
+.filter-date {
+    grid-column: 1 / 2; /* Привязка к первой колонке */
+}
+
+.filter-work {
+    grid-column: 3 / 4; /* Привязка к третьей колонке */
+}
+
+#dateFilter{
+    width: 70%;
+    box-sizing: border-box;
+}
+#workFilter {
+    width: 100%;
+    box-sizing: content-box;
+    margin-left: 0px;
+}
+
+.work-table {
+    grid-column: 1 / -1; /* Таблица занимает все колонки */
+}
+
+.work-table th {
+    text-align: left;
+}
+</style>
+<script>
+    function openPopup(url) {
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                document.querySelector('.popup-content').innerHTML = html;
+                document.querySelector('.popup').style.display = 'block';
+                document.querySelector('.overlay').style.display = 'block';
+            });
+    }
+
+    function closePopup() {
+        document.querySelector('.popup').style.display = 'none';
+        document.querySelector('.overlay').style.display = 'none';
+    }
+
+    function searchPart() {
+        const article = document.getElementById('part-article').value;
+        fetch('/warehouse/search_part/?article=${article}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.part) {
+                    document.getElementById('part-name').value = data.part.name;
+                    document.getElementById('part-manufacturer').value = data.part.manufacturer;
+                } else {
+                    alert('Запчасть не найдена. Вы можете сохранить данные вручную.');
+                }
+            });
+    }
+</script>
+
+<div class="container">
+    <div class="car-info">
+        <h2>Информация об автомобиле</h2>
+        <div class="car-details">
+            <div class="car-detail">
+                <strong>Марка:</strong> {{ car.brand }}<br>
+                <strong>Модель:</strong> {{ car.model }}<br>
+                <strong>ВИН-код:</strong> {{ car.vin_code }}<br>
+                <strong>Год выпуска:</strong> {{ car.year }}<br>
+                <strong>Пробег:</strong> {{ car.mileage }}<br>
+            </div>
+            <div class="car-detail">
+                <strong>Объем двигателя:</strong> {{ car.engine_volume }}<br>
+                <strong>Тип КПП:</strong> {{ car.transmission_type }}<br>
+            </div>
+        </div>
+    </div>
+
+  <div class="work-table-container">
+        <h2 style="white-space: nowrap;">Проведенные работы</h2>
+  <div class="filters-grid">
+        <div class="filter-date">
+            <input type="date" id="dateFilter" onkeyup="filterByDate()">
+        </div>
+<div class="filter-work">
+        <input type="text" id="workFilter" placeholder="Фильтр..." onkeyup="filterWorks()">
+    </div>
+  </div>
+        <table id="workTable" class="work-table">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Дата</th>
+                    <th onclick="sortTable(1)">Пробег</th>
+                    <th onclick="sortTable(2)">Наименование работы</th>
+                    <th>Запчасти</th>
+                    <th>Кол-во</th>
+                    <th>Артикул</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for work in works %}
+                <tr>
+                    <td>{{ work.0 }}</td>
+                    <td>{{ work.1 }}</td>
+                    <td>{{ work.2 }}</td>
+                    <td>{{ work.3 }}</td>
+                    <td>{{ work.4 }}</td>
+                    <td>{{ work.5 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">No work records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="scrollable-container">
+        <div class="works-container">
+            <button class="btn" onclick="openPopup('{% url 'add_work' car.vin_code %}')">Добавить новую работу</button>
+            <div class="works scrollable">
+                {% if work.id %}
+<a href="{% url 'work_detail' work.id %}" class="card-link" onclick="openPopup('{% url 'work_detail' work.id %}'); return false;">
+{% endif %}
+
+{% if work.id %}
+</a>
+{% endif %}
+            </div>
+        </div>
+
+        <div class="faults-container">
+            <button class="btn" onclick="openPopup('{% url 'add_fault' car.vin_code %}')">Добавить текущую неисправность</button>
+            <div class="faults scrollable">
+                {% for fault in faults %}
+                    <a href="{% url 'fault_detail' fault.id %}" class="card-link" onclick="openPopup('{% url 'fault_detail' fault.id %}'); return false;">
+
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" onclick="closePopup()"></div>
+<div class="popup">
+    <h2>Детали</h2>
+    <div class="popup-content"></div>
+    <button onclick="closePopup()">Закрыть</button>
+</div>
+    <script>
+    function sortTable(columnIndex) {
+        var table = document.getElementById("workTable");
+        var rows = table.rows;
+        var switching = true;
+        var shouldSwitch, i;
+        var direction = "asc";
+        var switchcount = 0;
+        while (switching) {
+            switching = false;
+            var rowsArray = Array.prototype.slice.call(rows, 1);
+            for (i = 0; i < rowsArray.length - 1; i++) {
+                shouldSwitch = false;
+                var x = rowsArray[i].getElementsByTagName("TD")[columnIndex];
+                var y = rowsArray[i + 1].getElementsByTagName("TD")[columnIndex];
+                if (direction == "asc") {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (direction == "desc") {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                rowsArray[i].parentNode.insertBefore(rowsArray[i + 1], rowsArray[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && direction == "asc") {
+                    direction = "desc";
+                    switching = true;
+                }
+            }
+        }
+    }
+
+    function filterWorks() {
+        var input = document.getElementById("workFilter");
+        var filter = input.value.toLowerCase();
+        var table = document.getElementById("workTable");
+        var tr = table.getElementsByTagName("tr");
+        for (var i = 1; i < tr.length; i++) {
+            var td = tr[i].getElementsByTagName("td")[2];
+            if (td) {
+                var txtValue = td.textContent || td.innerText;
+                if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+
+    function filterByDate() {
+        var input = document.getElementById("dateFilter").value;
+        var table = document.getElementById("workTable");
+        var tr = table.getElementsByTagName("tr");
+        for (var i = 1; i < tr.length; i++) {
+            var td = tr[i].getElementsByTagName("td")[0];
+            if (td) {
+                var txtValue = td.textContent || td.innerText;
+                if (txtValue.indexOf(input) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}
