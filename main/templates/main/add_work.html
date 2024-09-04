@@ -1,29 +1,198 @@
-<form method="post" action="{% url 'save_work' vin_code=vin_code %}">
-    {% csrf_token %}
-    <div>
-        <label for="work-date">Дата:</label>
-        <input type="date" id="work-date" name="date" required>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Механики</title>
+    <style>
+        /* Затемнение фона при открытии модального окна */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.7); /* Прозрачный черный фон */
+        }
+
+        /* Стили для модального окна */
+        .popup {
+            position: absolute;
+            background-color: #fff;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+            max-width: 600px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Стили для кнопки закрытия */
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            background: none;
+            border: none;
+            color: #000;
+            cursor: pointer;
+        }
+
+        .close-button:hover {
+            color: red;
+        }
+
+        /* Стили для формы */
+        form div {
+            margin-bottom: 8px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        textarea {
+            width: 90%;
+            padding: 3px;
+            box-sizing: border-box;
+        }
+
+        .work-fields {
+            margin-bottom: 8px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        /* Стили для кнопок */
+        button[type="button"],
+        button[type="submit"] {
+            display: inline-block;
+            padding: 10px 15px;
+            margin-right: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        button[type="button"]:hover,
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Кнопка для открытия popup -->
+<button id="openPopupButton">Добавить Механика</button>
+
+<!-- Контейнер для popup -->
+<div id="popup-form" class="modal">
+    <div class="popup">
+        <button class="close-button" onclick="closePopup()">&times;</button>
+        <!-- Ваша форма здесь -->
+        <form method="post" action="{% url 'save_work' vin_code=vin_code %}">
+            {% csrf_token %}
+            <div>
+                <label for="work-date">Дата:</label>
+                <input type="date" id="work-date" name="date" required>
+            </div>
+            <div>
+                <label for="work-mileage">Пробег:</label>
+                <input type="number" id="work-mileage" name="mileage" required>
+            </div>
+            <div id="work-fields-container">
+                <div class="work-fields">
+                    <label for="work-description">Описание:</label>
+                    <textarea id="work-description" name="description" required></textarea>
+                    <label for="part-article">Артикул запчасти:</label>
+                    <input type="text" id="part-article" name="part_article">
+                    <button type="button" onclick="searchPart()">Поиск запчасти</button>
+                    <label for="part-name">Название запчасти:</label>
+                    <input type="text" id="part-name" name="part_name">
+                    <label for="quantity">Количество:</label>
+                    <input type="number" id="quantity" name="quantity" required>
+                </div>
+            </div>
+            <button type="button" onclick="addWorkFields()">+</button>
+            <button type="submit">Сохранить</button>
+        </form>
     </div>
-    <div>
-        <label for="work-mileage">Пробег:</label>
-        <input type="number" id="work-mileage" name="mileage" required>
-    </div>
-    <div>
-        <label for="work-description">Описание:</label>
-        <textarea id="work-description" name="description" required></textarea>
-    </div>
-    <div>
-        <label for="part-article">Артикул запчасти:</label>
-        <input type="text" id="part-article" name="part_article">
-        <button type="button" onclick="searchPart()">Поиск запчасти</button>
-    </div>
-    <div>
-        <label for="part-name">Название запчасти:</label>
-        <input type="text" id="part-name" name="part_name">
-    </div>
-    <div>
-        <label for="part-manufacturer">Производитель запчасти:</label>
-        <input type="text" id="part-manufacturer" name="part_manufacturer">
-    </div>
-    <button type="submit">Сохранить</button>
-</form>
+</div>
+
+<script>
+    // Открытие popup
+    document.getElementById('openPopupButton').addEventListener('click', function() {
+        document.getElementById('popup-form').style.display = 'block';
+    });
+
+    // Закрытие popup
+    function closePopup() {
+        document.getElementById('popup-form').style.display = 'none';
+    }
+
+    // Добавление новых полей для ввода работы
+    function addWorkFields() {
+        const workFieldsContainer = document.getElementById('work-fields-container');
+
+        const workFields = document.createElement('div');
+        workFields.classList.add('work-fields');
+
+        workFields.innerHTML = `
+            <button type="button" class="remove-button" onclick="removeWorkFields(this)">&#10005;</button>
+            <div class="form-group">
+                <label>Описание работы:</label>
+                <textarea name="description[]" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Артикул запчасти:</label>
+                <input type="text" name="part_article[]" placeholder="Введите артикул">
+            </div>
+            <div class="form-group">
+                <label>Название запчасти:</label>
+                <input type="text" name="part_name[]" placeholder="Введите название">
+            </div>
+            <div>
+                <label for="quantity">Количество:</label>
+                <input type="number" name="quantity[]" placeholder="Введите количество" required>
+            </div>
+        `;
+
+        workFieldsContainer.appendChild(workFields);
+    }
+
+    // Удаление полей для ввода работы
+    function removeWorkFields(button) {
+        const workFields = button.parentElement;
+        workFields.remove();
+    }
+
+    // Установка текущей даты по умолчанию
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateField = document.getElementById('work-date');
+        if (dateField) {
+            const today = new Date().toISOString().split('T')[0];
+            dateField.value = today;
+        }
+    });
+</script>
+
+</body>
+</html>

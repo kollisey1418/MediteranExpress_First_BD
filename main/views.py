@@ -4,11 +4,12 @@ import requests
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
 from .models import (Item, EngineParts, TransmissionParts, PneumaticParts, ChassisParts,
-BrakeParts, SteeringParts, ElectricityParts, ClimateParts, CarBodyParts, InteriorParts, MaintenanceParts, LiquidsParts, Brand, Model, Car, WorkPerformed, Fault, Work)
-from .forms import ItemForm, CarForm, WorkForm, FaultForm
+BrakeParts, SteeringParts, ElectricityParts, ClimateParts, CarBodyParts, InteriorParts, MaintenanceParts,
+LiquidsParts, Brand, Model, Car, WorkPerformed, Fault, Work, Mechanic)
+from .forms import ItemForm, CarForm, WorkForm, FaultForm, MechanicForm
 from django.db.models import Q
 from django.db import connection
-from django.forms import formset_factory
+#from django.forms import formset_factory
 from django.forms import modelformset_factory
 from django.utils import timezone
 import logging
@@ -491,3 +492,96 @@ def delete_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
     item.delete()
     return redirect('warehouse_new')
+
+
+
+
+
+
+def mechanics_list(request):
+    mechanics = Mechanic.objects.all()  # Получаем список всех механиков из БД
+    return render(request, 'main/mechanics.html', {'mechanics': mechanics})
+
+def add_mechanic(request):
+    if request.method == 'POST':
+        form = MechanicForm(request.POST)
+        if form.is_valid():
+            mechanic = form.save()  # Сохраняем нового механика в БД
+            table_name = f"{mechanic.first_name}_{mechanic.last_name}_{mechanic.id}".replace(' ', '_')
+
+            # Создаем новую таблицу в БД для механика
+            with connection.cursor() as cursor:
+                cursor.execute(f"""
+                    CREATE TABLE {table_name} (
+                        id SERIAL PRIMARY KEY,
+                        date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        state_number VARCHAR(20),
+                        work_name VARCHAR(255)
+                    )
+                """)
+            return JsonResponse({'success': True, 'message': 'Механик успешно добавлен!'})
+
+        return JsonResponse({'success': False, 'message': 'Некорректные данные формы.'}, status=400)
+    else:
+        form = MechanicForm()
+    return render(request, 'main/add_mechanic.html', {'form': form})
+def mechanic_detail(request, pk):
+    mechanic = get_object_or_404(Mechanic, pk=pk)
+    table_name = f"{mechanic.first_name}_{mechanic.last_name}_{mechanic.id}".replace(' ', '_')
+
+
+
+    # Извлечение данных из таблицы механика
+    try:
+        with connection.cursor() as cursor:
+            # Проверка, существует ли таблица
+            cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'")
+            table_exists = cursor.fetchone()
+
+            # Извлечение данных, если таблица существует
+            if table_exists:
+                cursor.execute(f"SELECT date, state_number, work_name FROM {table_name}")
+                rows = cursor.fetchall()  # Получение всех строк из таблицы
+            else:
+                rows = []  # Если таблицы нет, создаем пустой список
+
+    except Exception as e:
+        print(f"Ошибка при извлечении данных: {e}")
+        rows = []  # На случай ошибки при выполнении SQL-запроса
+
+    return render(request, 'main/mechanic_detail.html', {'mechanic': mechanic, 'rows': rows})
+def add_mechanic_work(request, pk):
+    mechanic = get_object_or_404(Mechanic, pk=pk)
+
+    if request.method == 'POST':
+        mechanic = get_object_or_404(Mechanic, pk=pk)
+        table_name = f"{mechanic.first_name}_{mechanic.last_name}_{mechanic.id}".replace(' ', '_')
+        date = request.POST.get('date')
+        state_number = request.POST.get('state_number')
+        work_names = request.POST.getlist('work_name[]')  # Получаем все наименования работ
+
+        try:
+            with connection.cursor() as cursor:
+                # Создание таблицы, если она не существует (выполняется один раз)
+                cursor.execute(f"""
+                            CREATE TABLE IF NOT EXISTS {table_name} (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                date TEXT,
+                                state_number TEXT,
+                                work_name TEXT
+                            )
+                        """)
+
+                # Вставка каждой строки работы в таблицу
+                for work_name in work_names:
+                    cursor.execute(f"""
+                                INSERT INTO {table_name} (date, state_number, work_name)
+                                VALUES (%s, %s, %s)
+                            """, [date, state_number, work_name])
+
+            return JsonResponse({'success': True})
+        except Exception as e:
+            print(f"Ошибка при сохранении данных: {e}")
+            return JsonResponse({'success': False, 'message': str(e)})
+
+        return JsonResponse({'success': False, 'message': 'Неверный метод запроса'})

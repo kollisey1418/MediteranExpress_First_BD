@@ -2,7 +2,7 @@
 
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Car, WorkPerformed, Fault, Brand, Model, Item
+from .models import Car, WorkPerformed, Fault, Brand, Model, Item, Mechanic
 
 class CarForm(forms.ModelForm):
     STATUS_CHOICES = [
@@ -100,3 +100,15 @@ class ItemForm(forms.ModelForm):
     class Meta:
         model = Item
         fields = ['article', 'name', 'size', 'quantity', 'brand', 'model', 'manufacturer', 'part_type']
+
+
+
+
+
+
+
+
+class MechanicForm(forms.ModelForm):
+    class Meta:
+        model = Mechanic
+        fields = ['first_name', 'last_name']

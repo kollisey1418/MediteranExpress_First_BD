@@ -232,13 +232,13 @@
     </div>
 </div>
 
-<div class="overlay" onclick="closePopup()"></div>
+
 <div class="popup">
-    <h2>Детали</h2>
+
     <div class="popup-content"></div>
-    <button onclick="closePopup()">Закрыть</button>
+
 </div>
-    <script>
+ <script>
     function sortTable(columnIndex) {
         var table = document.getElementById("workTable");
         var rows = table.rows;
@@ -296,21 +296,21 @@
         }
     }
 
-    function filterByDate() {
-        var input = document.getElementById("dateFilter").value;
-        var table = document.getElementById("workTable");
-        var tr = table.getElementsByTagName("tr");
-        for (var i = 1; i < tr.length; i++) {
-            var td = tr[i].getElementsByTagName("td")[0];
-            if (td) {
-                var txtValue = td.textContent || td.innerText;
-                if (txtValue.indexOf(input) > -1) {
-                    tr[i].style.display = "";
-                } else {
-                    tr[i].style.display = "none";
-                }
-            }
-        }
-    }
+  //  function filterByDate() {
+  //      var input = document.getElementById("dateFilter").value;
+  //      var table = document.getElementById("workTable");
+  //      var tr = table.getElementsByTagName("tr");
+  //      for (var i = 1; i < tr.length; i++) {
+  //          var td = tr[i].getElementsByTagName("td")[0];
+  //          if (td) {
+  //              var txtValue = td.textContent || td.innerText;
+  //              if (txtValue.indexOf(input) > -1) {
+  //                  tr[i].style.display = "";
+  //              } else {
+   //                 tr[i].style.display = "none";
+   //             }
+   //         }
+   //     }
+   // }
 </script>
 {% endblock %}

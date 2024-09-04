@@ -19,5 +19,10 @@ urlpatterns = [
     path('autopark/fault_detail/<int:fault_id>/', views.fault_detail, name='fault_detail'),
     path('warehouse/search_part/', views.search_part, name='search_part'),
     path('autopark/save_work/<str:vin_code>/', views.save_work, name='save_work'),
+    path('mechanics/', views.mechanics_list, name='mechanics_list'),
+    path('add_mechanic/', views.add_mechanic, name='add_mechanic'),
+    path('mechanic/<int:pk>/', views.mechanic_detail, name='mechanic_detail'),
+    path('mechanic/<int:pk>/add_mechanic_work/', views.add_mechanic_work, name='add_mechanic_work'),
+
 
 ]

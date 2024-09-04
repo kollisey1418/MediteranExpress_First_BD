@@ -97,16 +97,37 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
+            'level': 'INFO',  # Устанавливаем уровень на INFO, чтобы убрать DEBUG-сообщения
             'class': 'logging.StreamHandler',
-        },
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'debug.log',
         },
     },
     'root': {
-        'handlers': ['console', 'file'],
-        'level': 'DEBUG',
+        'handlers': ['console'],
+        'level': 'WARNING',  # Устанавливаем уровень на WARNING, чтобы видеть только важные сообщения
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Для Django выводим только ошибки
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Логируем только ошибки запросов
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Убираем подробные SQL-запросы, оставляем только ошибки
+            'propagate': False,
+        },
+        'myapp': {  # Ваше приложение
+            'handlers': ['console'],
+            'level': 'INFO',  # Для вашего приложения выводим INFO и выше
+            'propagate': False,
+        },
     },
 }
+
+X_FRAME_OPTIONS = 'ALLOWALL'
+SECURE_CONTENT_TYPE_NOSNIFF = False
