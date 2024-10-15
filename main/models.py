@@ -35,6 +35,7 @@ class WorkPerformed(models.Model):
     used_parts = models.CharField(max_length=255)
     quantity = models.IntegerField()
     article = models.CharField(max_length=255)
+    part_manufacturer = models.CharField(max_length=255, blank=True, null=True)
     date = models.DateTimeField(default=timezone.now)
 
     from django.db import models
@@ -43,8 +44,8 @@ class Work(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE)
     date = models.DateField()
     mileage = models.IntegerField()
-    description = models.TextField()
-    part_article = models.CharField(max_length=100, blank=True, null=True)
+    work_name = models.TextField()
+    article = models.CharField(max_length=100, blank=True, null=True)
     part_name = models.CharField(max_length=100, blank=True, null=True)
     part_manufacturer = models.CharField(max_length=100, blank=True, null=True)
 

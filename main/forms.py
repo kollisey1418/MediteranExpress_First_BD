@@ -41,10 +41,11 @@ class CarForm(forms.ModelForm):
 
 class WorkForm(forms.ModelForm):
     date = forms.DateTimeField(widget=forms.HiddenInput(), required=False)
+    
 
     class Meta:
         model = WorkPerformed
-        fields = ['mileage', 'work_name', 'used_parts', 'quantity', 'article']
+        fields = ['date','mileage', 'work_name', 'used_parts', 'quantity', 'article', 'part_manufacturer']
 
     def __init__(self, *args, **kwargs):
         self.car = kwargs.pop('car', None)

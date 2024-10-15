@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.db import connection
 #from django.forms import formset_factory
 from django.forms import modelformset_factory
-from django.utils import timezone
+from .models import WorkPerformed
 import logging
 
 logger = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ def car_detail(request, vin_code):
 
     # Извлекаем данные о работах из соответствующей таблицы
     with connection.cursor() as cursor:
-        cursor.execute(f"SELECT date, mileage, work_name, part_name, quantity, article FROM {vin_code_table}")
+        cursor.execute(f"SELECT date, mileage, work_name, used_parts, quantity, article FROM {vin_code_table}")
         work_records = cursor.fetchall()
 
     # Подготавливаем данные для шаблона
@@ -141,7 +141,7 @@ def add_car(request):
                     date TEXT NOT NULL,
                     mileage INTEGER NOT NULL,
                     work_name TEXT NOT NULL,
-                    part_name TEXT,
+                    used_parts TEXT,
                     quantity INTEGER,
                     article TEXT
                 );
@@ -156,46 +156,105 @@ def add_car(request):
 def edit_car(request, vin_code):
     car = get_object_or_404(Car, vin_code=vin_code)
     if request.method == 'POST':
+        print("POST-запрос успешно получен")
         form = CarForm(request.POST, instance=car)
         if form.is_valid():
             form.save()
             return redirect('car_detail', vin_code=vin_code)
     else:
+        print(f"Метод запроса: {request.method}")
         form = CarForm(instance=car)
     return render(request, 'main/edit_car.html', {'form': form})
 
 
-def add_work(request, vin_code):
+from django.utils import timezone
+
+
+def save_work_or_add(request, vin_code):
+    print("Функция save_work_or_add вызвана")
+    # Получаем объект автомобиля
     car = get_object_or_404(Car, vin_code=vin_code)
+
     if request.method == 'POST':
-        form = WorkForm(request.POST)
-        if form.is_valid():
-            work_data = form.cleaned_data
+        print(f"POST данные: {request.POST}")
+        # Получаем списки данных из формы
+        dates = request.POST.getlist('date')
+        mileages = request.POST.getlist('mileage')
+        work_names = request.POST.getlist('work_name[]')
+        used_parts = request.POST.getlist('used_parts[]')
+        quantities = request.POST.getlist('quantity[]')
+        articles = request.POST.getlist('article[]')
+        part_manufacturers = request.POST.getlist('part_manufacturer[]')
+        print(f"work_names: {work_names}")
+        print(f"mileages: {mileages}")
 
-            # Генерируем имя таблицы на основе VIN-кода автомобиля
-            vin_code_table = f"work_{vin_code.replace('-', '_')}"
+        # Получаем дату и пробег из основной формы
+        date = request.POST.get('date')
+        mileage = request.POST.get('mileage')
 
-            # Вставляем данные в таблицу
-            from django.db import connection
-            with connection.cursor() as cursor:
-                cursor.execute(f"""
-                INSERT INTO {vin_code_table} (date, mileage, work_name, part_name, quantity, article)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                """, [
-                    work_data['date'] if 'date' in work_data else timezone.now(),
-                    work_data['mileage'],
-                    work_data['work_name'],
-                    work_data.get('part_name', ''),
-                    work_data.get('quantity', 1),
-                    work_data.get('article', '')
-                ])
+        mileage = int(mileage)  # Преобразуем строку в целое число
 
-            return redirect('car_detail', vin_code=vin_code)
+        # Если дата пустая, используем текущую дату и время с временной зоной
+        if not date or date == '':
+            date = timezone.now()  # Используем текущую дату и время
+        else:
+            # Преобразуем дату в формат datetime и учитываем временную зону
+            date = timezone.make_aware(timezone.datetime.strptime(date, "%Y-%m-%d"), timezone.get_current_timezone())
+            # Добавляем текущее время к указанной дате
+            now = timezone.now()
+            date = date.replace(hour=now.hour, minute=now.minute, second=now.second)
+
+    print(f"Длина work_names: {len(work_names)}")
+    print(f"Длина part_names: {len(used_parts)}")
+    print(f"Длина quantities: {len(quantities)}")
+    print(f"Длина articles: {len(articles)}")
+    print(f"Длина part_manufacturers: {len(part_manufacturers)}")
+
+    if len(work_names) == len(used_parts) == len(quantities) == len(articles) == len(part_manufacturers):
+
+        try:
+            # Перебираем все записи и сохраняем каждую по отдельности
+            for i in range(len(work_names)):
+                print(f"Сохраняемые данные: {work_names[i]}, {mileages}, {used_parts[i]}, {quantities[i]}, {articles[i]}, {part_manufacturers[i]}")
+
+                performed_work = WorkPerformed(
+                    vin_code=car,
+                    date=date,
+                    mileage=mileage,
+                    work_name=work_names[i],
+                    used_parts=used_parts[i],
+                    quantity=quantities[i],
+                    article=articles[i],
+                    part_manufacturer=part_manufacturers[i]
+                )
+                # Вывод всех списков для проверки
+                print(f"work_names: {work_names}")
+                print(f"mileages: {mileages}")
+                print(f"used_parts: {used_parts}")
+                print(f"quantities: {quantities}")
+                print(f"articles: {articles}")
+                print(f"part_manufacturers: {part_manufacturers}")
+
+
+                performed_work.save()  # Сохраняем каждую запись
+                print(f"WorkPerformed сохранено: {performed_work}")
+
+        except Exception as e:
+            print(f"Ошибка при сохранении в WorkPerformed: {e}")
+            return render(request, 'main/car_detail.html', {'form': None, 'car': car, 'vin_code': vin_code})
+
+        # Перенаправление на страницу деталей автомобиля
+        return redirect('car_detail', vin_code=vin_code)
+
     else:
+        print("Длины списков не совпадают!")
         form = WorkForm()
-    return render(request, 'main/add_work.html', {'form': form, 'car': car, 'vin_code': vin_code})
+
+    # Возврат шаблона с формой для добавления работы
+    return render(request, 'main/car_detail.html', {'form': form, 'car': car, 'vin_code': vin_code})
 
 
+#поиск запчастей
 def search_part(request):
     article = request.GET.get('article')
     try:
@@ -210,49 +269,7 @@ def search_part(request):
         data = {'part': None}
     return JsonResponse(data)
 
-
-def save_work(request, vin_code):
-    if request.method == 'POST':
-        car = get_object_or_404(Car, vin_code=vin_code)
-        date = request.POST.get('date')
-        mileage = request.POST.get('mileage')
-        description = request.POST.get('description')
-        part_article = request.POST.get('part_article')
-        part_name = request.POST.get('part_name')
-        part_manufacturer = request.POST.get('part_manufacturer')
-
-        # Сохранение работы в основной таблице Work
-        work = Work(
-            car=car,
-            date=date,
-            mileage=mileage,
-            description=description,
-            part_article=part_article,
-            part_name=part_name,
-            part_manufacturer=part_manufacturer
-        )
-        work.save()
-
-        # Генерация имени таблицы на основе VIN-кода
-        vin_code_table = f"work_{vin_code.replace('-', '_')}"
-
-        # Вставка данных в соответствующую таблицу на основе VIN-кода
-        with connection.cursor() as cursor:
-            cursor.execute(f"""
-            INSERT INTO {vin_code_table} (date, mileage, work_name, part_name, quantity, article)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """, [
-                date,
-                mileage,
-                description,
-                part_name,
-                1,  # Если количество не указано, используем 1 по умолчанию
-                part_article
-            ])
-
-        # Перенаправление на страницу с деталями автомобиля после сохранения работы
-        return redirect('car_detail', vin_code=vin_code)
-
+#неисправности
 def add_fault(request, vin_code):
     car = get_object_or_404(Car, vin_code=vin_code)
     FaultFormSet = modelformset_factory(Fault, form=FaultForm, extra=1, can_delete=True)

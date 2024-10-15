@@ -3,34 +3,40 @@
 
 {% block content %}
 <style>
-    /* Стили остаются в блоке content, сразу после его начала */
     .container {
         width: 80%;
         margin: 10px;
     }
+
     .car-info {
         margin-bottom: 20px;
     }
+
     .car-details {
         display: flex;
         justify-content: space-between;
     }
+
     .car-detail {
         width: 45%;
     }
+
     .scrollable-container {
         display: flex;
         justify-content: space-between;
     }
+
     .scrollable {
         width: 100%;
         height: 300px;
         overflow-y: auto;
     }
+
     .works-container,
     .faults-container {
         width: 49%;
     }
+
     .card {
         margin-bottom: 10px;
         padding: 10px;
@@ -38,6 +44,7 @@
         border-radius: 5px;
         box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
     }
+
     .overlay {
         position: fixed;
         top: 0;
@@ -47,6 +54,7 @@
         background: rgba(0, 0, 0, 0.7);
         display: none;
     }
+
     .popup {
         position: fixed;
         top: 50%;
@@ -59,93 +67,96 @@
         z-index: 10;
         max-width: 500px;
         width: 100%;
+        max-height: 80vh; /* Фиксированная максимальная высота окна */
+        overflow-y: auto; /* Включение вертикальной прокрутки */
     }
+
     .work-table-container {
-    margin-top: 20px;
-    margin-left: 0px; /* Минимальный отступ слева */
-    width: 60%; /* Уменьшение ширины таблицы на 40% */
-    display: grid;
-    grid-template-columns: 150px 100px 100px 150px 100px 100px; /* Установите размеры колонок, соответствующие столбцам таблицы */
-    gap: 10px;
-    margin-bottom: 20px;
-}
-    .work-table {
-    width: 100%; /* Таблица занимает всю ширину контейнера */
-    border-collapse: collapse;
+        margin-top: 20px;
+        width: 60%;
+        display: grid;
+        grid-template-columns: 150px 100px 100px 150px 100px 100px;
+        gap: 10px;
+        margin-bottom: 20px;
     }
+
+    .work-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
     .work-table th, .work-table td {
         border: 1px solid #ddd;
         padding: 8px;
         text-align: left;
     }
+
     .work-table th {
         cursor: pointer;
         background-color: #f2f2f2;
     }
+
     .work-table th:hover {
         background-color: #ddd;
     }
 
-.filters-grid {
-    display: contents; /* Отображаем дочерние элементы в виде сетки, чтобы они следовали за колонками таблицы */
+    .filters-grid {
+        display: contents;
+    }
+
+    .filter-date {
+        grid-column: 1 / 2;
+    }
+
+    .filter-work {
+        grid-column: 3 / 4;
+    }
+
+    #dateFilter {
+        width: 70%;
+        box-sizing: border-box;
+    }
+
+    #workFilter {
+        width: 100%;
+        box-sizing: content-box;
+        margin-left: 0px;
+    }
+
+    .work-table {
+        grid-column: 1 / -1;
+    }
+
+    .work-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 3px; /* Расстояние между строками */
+    margin-bottom: 7px; /* Отступ снизу для каждого блока */
+    border: 1px solid #ddd; /* Лёгкая рамка для визуального выделения */
+    padding: 3px; /* Отступы внутри контейнера */
+    border-radius: 5px; /* Сглаженные углы */
+    background-color: #f9f9f9; /* Светлый фон для удобочитаемости */
 }
 
-.filter-date {
-    grid-column: 1 / 2; /* Привязка к первой колонке */
+.field-group {
+    display: flex;
+    flex-direction: column;
 }
 
-.filter-work {
-    grid-column: 3 / 4; /* Привязка к третьей колонке */
+.remove-work-field {
+    align-self: flex-end; /* Расположить кнопку справа */
+    background-color: #ff4d4d; /* Красный цвет кнопки удаления */
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
 }
 
-#dateFilter{
-    width: 70%;
-    box-sizing: border-box;
-}
-#workFilter {
-    width: 100%;
-    box-sizing: content-box;
-    margin-left: 0px;
-}
-
-.work-table {
-    grid-column: 1 / -1; /* Таблица занимает все колонки */
-}
-
-.work-table th {
-    text-align: left;
+.remove-work-field:hover {
+    background-color: #d43f3f; /* Темнее при наведении */
 }
 </style>
-<script>
-    function openPopup(url) {
-        fetch(url)
-            .then(response => response.text())
-            .then(html => {
-                document.querySelector('.popup-content').innerHTML = html;
-                document.querySelector('.popup').style.display = 'block';
-                document.querySelector('.overlay').style.display = 'block';
-            });
-    }
-
-    function closePopup() {
-        document.querySelector('.popup').style.display = 'none';
-        document.querySelector('.overlay').style.display = 'none';
-    }
-
-    function searchPart() {
-        const article = document.getElementById('part-article').value;
-        fetch('/warehouse/search_part/?article=${article}')
-            .then(response => response.json())
-            .then(data => {
-                if (data.part) {
-                    document.getElementById('part-name').value = data.part.name;
-                    document.getElementById('part-manufacturer').value = data.part.manufacturer;
-                } else {
-                    alert('Запчасть не найдена. Вы можете сохранить данные вручную.');
-                }
-            });
-    }
-</script>
 
 <div class="container">
     <div class="car-info">
@@ -165,16 +176,16 @@
         </div>
     </div>
 
-  <div class="work-table-container">
-        <h2 style="white-space: nowrap;">Проведенные работы</h2>
-  <div class="filters-grid">
-        <div class="filter-date">
-            <input type="date" id="dateFilter" onkeyup="filterByDate()">
+    <div class="work-table-container">
+        <h2>Проведенные работы</h2>
+        <div class="filters-grid">
+            <div class="filter-date">
+                <input type="date" id="dateFilter" onkeyup="filterByDate()">
+            </div>
+            <div class="filter-work">
+                <input type="text" id="workFilter" placeholder="Фильтр..." onkeyup="filterWorks()">
+            </div>
         </div>
-<div class="filter-work">
-        <input type="text" id="workFilter" placeholder="Фильтр..." onkeyup="filterWorks()">
-    </div>
-  </div>
         <table id="workTable" class="work-table">
             <thead>
                 <tr>
@@ -188,129 +199,124 @@
             </thead>
             <tbody>
                 {% for work in works %}
-                <tr>
-                    <td>{{ work.0 }}</td>
-                    <td>{{ work.1 }}</td>
-                    <td>{{ work.2 }}</td>
-                    <td>{{ work.3 }}</td>
-                    <td>{{ work.4 }}</td>
-                    <td>{{ work.5 }}</td>
-                </tr>
+                    <tr>
+                        <td>{{ work.0 }}</td>
+                        <td>{{ work.1 }}</td>
+                        <td>{{ work.2 }}</td>
+                        <td>{{ work.3 }}</td>
+                        <td>{{ work.4 }}</td>
+                        <td>{{ work.5 }}</td>
+                    </tr>
                 {% empty %}
-                <tr>
-                    <td colspan="6">No work records found.</td>
-                </tr>
+                    <tr>
+                        <td colspan="6">No work records found.</td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <div class="scrollable-container">
-        <div class="works-container">
-            <button class="btn" onclick="openPopup('{% url 'add_work' car.vin_code %}')">Добавить новую работу</button>
-            <div class="works scrollable">
-                {% if work.id %}
-<a href="{% url 'work_detail' work.id %}" class="card-link" onclick="openPopup('{% url 'work_detail' work.id %}'); return false;">
-{% endif %}
+    <!-- Кнопка для открытия окна добавления работы -->
+    <button id="openAddWorkPopupButton">Добавить работу</button>
 
-{% if work.id %}
-</a>
-{% endif %}
+    <!-- Всплывающее окно с формой добавления работы -->
+    <div id="addWorkPopup" class="popup">
+        <button class="close-button" onclick="closeAddWorkPopup()">&times;</button>
+        <form id="addWorkForm" method="POST" action="{% url 'save_work_or_add' car.vin_code %}">
+            {% csrf_token %}
+            <div>
+                <label for="work-date">Дата:</label>
+                <input type="date" id="date" name="date" required>
             </div>
-        </div>
-
-        <div class="faults-container">
-            <button class="btn" onclick="openPopup('{% url 'add_fault' car.vin_code %}')">Добавить текущую неисправность</button>
-            <div class="faults scrollable">
-                {% for fault in faults %}
-                    <a href="{% url 'fault_detail' fault.id %}" class="card-link" onclick="openPopup('{% url 'fault_detail' fault.id %}'); return false;">
-
-                    </a>
-                {% endfor %}
+            <div>
+                <label for="state-number">Пробег:</label>
+                <input type="number" id="mileage" name="mileage" required>
             </div>
-        </div>
+           <div id="work-fields-container">
+    <div class="work-fields">
+        <label for="work-name">Наименование работ:</label>
+        <input type="text" id="work-name" name="work_name[]" required>
+
+        <label for="used-parts">Запчасть:</label>
+        <input type="text" id="used-parts" name="used_parts[]" required>
+
+        <label for="quantity">Количество:</label>
+        <input type="number" id="quantity" name="quantity[]" required min="1" step="1">
+
+        <label for="article">Артикул:</label>
+        <input type="text" id="article" name="article[]" required>
+
+        <label for="part_manufacturer">Производитель:</label>
+        <input type="text" id="part_manufacturer" name="part_manufacturer[]" required>
     </div>
 </div>
 
+            <button type="button" onclick="addWorkFields()">Добавить строку</button>
+            <button type="submit">Сохранить</button>
+        </form>
+    </div>
 
-<div class="popup">
-
-    <div class="popup-content"></div>
-
+    <div class="overlay" onclick="closeAddWorkPopup()"></div>
 </div>
- <script>
-    function sortTable(columnIndex) {
-        var table = document.getElementById("workTable");
-        var rows = table.rows;
-        var switching = true;
-        var shouldSwitch, i;
-        var direction = "asc";
-        var switchcount = 0;
-        while (switching) {
-            switching = false;
-            var rowsArray = Array.prototype.slice.call(rows, 1);
-            for (i = 0; i < rowsArray.length - 1; i++) {
-                shouldSwitch = false;
-                var x = rowsArray[i].getElementsByTagName("TD")[columnIndex];
-                var y = rowsArray[i + 1].getElementsByTagName("TD")[columnIndex];
-                if (direction == "asc") {
-                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-                        shouldSwitch = true;
-                        break;
-                    }
-                } else if (direction == "desc") {
-                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                        shouldSwitch = true;
-                        break;
-                    }
-                }
-            }
-            if (shouldSwitch) {
-                rowsArray[i].parentNode.insertBefore(rowsArray[i + 1], rowsArray[i]);
-                switching = true;
-                switchcount++;
-            } else {
-                if (switchcount == 0 && direction == "asc") {
-                    direction = "desc";
-                    switching = true;
-                }
-            }
-        }
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('openAddWorkPopupButton').addEventListener('click', function() {
+            document.getElementById('addWorkPopup').style.display = 'block';
+            document.querySelector('.overlay').style.display = 'block';
+            setCurrentDate();
+        });
+    });
+
+    function closeAddWorkPopup() {
+        document.getElementById('addWorkPopup').style.display = 'none';
+        document.querySelector('.overlay').style.display = 'none';
     }
 
-    function filterWorks() {
-        var input = document.getElementById("workFilter");
-        var filter = input.value.toLowerCase();
-        var table = document.getElementById("workTable");
-        var tr = table.getElementsByTagName("tr");
-        for (var i = 1; i < tr.length; i++) {
-            var td = tr[i].getElementsByTagName("td")[2];
-            if (td) {
-                var txtValue = td.textContent || td.innerText;
-                if (txtValue.toLowerCase().indexOf(filter) > -1) {
-                    tr[i].style.display = "";
-                } else {
-                    tr[i].style.display = "none";
-                }
-            }
-        }
+    function addWorkFields() {
+    const workFieldsContainer = document.getElementById('work-fields-container');
+    const workFields = document.createElement('div');
+    workFields.classList.add('work-fields');
+    workFields.innerHTML = `
+        <div class="field-group">
+            <label for="work-name">Наименование работ:</label>
+            <input type="text" name="work_name[]" required>
+        </div>
+
+        <div class="field-group">
+            <label for="used_parts">Запчасть:</label>
+            <input type="text" name="used_parts[]" required>
+        </div>
+
+        <div class="field-group">
+            <label for="quantity">Количество:</label>
+            <input type="number" name="quantity[]" required>
+        </div>
+
+        <div class="field-group">
+            <label for="article">Артикул:</label>
+            <input type="text" name="article[]" required>
+        </div>
+
+
+        <div class="field-group">
+            <label for="part_manufacturer">Производитель:</label>
+            <input type="text" name="part_manufacturer[]" required>
+        </div>
+        <button type="button" class="remove-work-field" onclick="removeWorkFields(this)">&times;</button>
+    `;
+    workFieldsContainer.appendChild(workFields);
+}
+
+
+    function removeWorkFields(button) {
+        button.parentElement.remove();
     }
 
-  //  function filterByDate() {
-  //      var input = document.getElementById("dateFilter").value;
-  //      var table = document.getElementById("workTable");
-  //      var tr = table.getElementsByTagName("tr");
-  //      for (var i = 1; i < tr.length; i++) {
-  //          var td = tr[i].getElementsByTagName("td")[0];
-  //          if (td) {
-  //              var txtValue = td.textContent || td.innerText;
-  //              if (txtValue.indexOf(input) > -1) {
-  //                  tr[i].style.display = "";
-  //              } else {
-   //                 tr[i].style.display = "none";
-   //             }
-   //         }
-   //     }
-   // }
+    function setCurrentDate() {
+        const dateField = document.getElementById('date');
+        const today = new Date().toISOString().split('T')[0];
+        dateField.value = today;
+    }
 </script>
 {% endblock %}

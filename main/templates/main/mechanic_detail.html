@@ -165,26 +165,20 @@
     function closeAddWorkPopup() {
         document.getElementById('addWorkPopup').style.display = 'none';
     }
-
-    // Функция для добавления полей наименования работ
     function addWorkFields() {
         const workFieldsContainer = document.getElementById('work-fields-container');
-
         const workFields = document.createElement('div');
         workFields.classList.add('work-fields');
-
         workFields.innerHTML = `
             <label for="work-name">Наименование работ:</label>
             <input type="text" name="work_name[]" required>
+            <button type="button" class="remove-work-field" onclick="removeWorkFields(this)">&times;</button>
         `;
-
         workFieldsContainer.appendChild(workFields);
     }
 
-    // Функция для удаления полей работы
     function removeWorkFields(button) {
-        const workFields = button.parentElement;
-        workFields.remove();
+        button.parentElement.remove();
     }
 
     // Установка текущей даты по умолчанию

@@ -22,7 +22,6 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('date', models.DateField()),
                 ('mileage', models.IntegerField()),
-                ('description', models.TextField()),
                 ('part_article', models.CharField(blank=True, max_length=100, null=True)),
                 ('part_name', models.CharField(blank=True, max_length=100, null=True)),
                 ('part_manufacturer', models.CharField(blank=True, max_length=100, null=True)),
