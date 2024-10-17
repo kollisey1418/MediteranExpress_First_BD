@@ -35,6 +35,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'home'
+LOGIN_URL = 'login'
+
 ROOT_URLCONF = 'MediteranExpress.urls'
 
 TEMPLATES = [

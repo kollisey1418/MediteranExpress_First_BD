@@ -9,10 +9,34 @@ LiquidsParts, Brand, Model, Car, WorkPerformed, Fault, Work, Mechanic)
 from .forms import ItemForm, CarForm, WorkForm, FaultForm, MechanicForm
 from django.db.models import Q
 from django.db import connection
-#from django.forms import formset_factory
 from django.forms import modelformset_factory
 from .models import WorkPerformed
 import logging
+
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import Group, User
+from django.shortcuts import render, redirect
+
+
+
+def register_user(request):
+    if not request.user.is_superuser:  # Только администратор может регистрировать пользователей
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            group_name = request.POST.get('group')
+            group = Group.objects.get(name=group_name)
+            user.groups.add(group)
+            return redirect('home')
+    else:
+        form = UserCreationForm()
+
+    return render(request, 'main/register.html', {'form': form, 'groups': ['Водители', 'Механики', 'Администраторы']})
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +65,9 @@ def get_car_info_by_vin(vin_code):
             'state_number': '',
             'other_data': 'No additional information available'
         }
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name='Механики').exists() or u.is_superuser)
 
 def work_detail(request, work_id):
     work = get_object_or_404(WorkPerformed, id=work_id)
