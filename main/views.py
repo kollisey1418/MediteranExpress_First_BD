@@ -212,10 +212,13 @@ def save_work_or_add(request, vin_code):
 
     if len(work_names) == len(used_parts) == len(quantities) == len(articles) == len(part_manufacturers):
 
+        vin_code_table = f"work_{vin_code.replace('-', '_')}"
+
         try:
             # Перебираем все записи и сохраняем каждую по отдельности
-            for i in range(len(work_names)):
-                print(f"Сохраняемые данные: {work_names[i]}, {mileages}, {used_parts[i]}, {quantities[i]}, {articles[i]}, {part_manufacturers[i]}")
+            with connection.cursor() as cursor:
+                for i in range(len(work_names)):
+                    print(f"Сохраняемые данные: {work_names[i]}, {mileages}, {used_parts[i]}, {quantities[i]}, {articles[i]}, {part_manufacturers[i]}")
 
                 performed_work = WorkPerformed(
                     vin_code=car,
@@ -236,8 +239,15 @@ def save_work_or_add(request, vin_code):
                 print(f"part_manufacturers: {part_manufacturers}")
 
 
-                performed_work.save()  # Сохраняем каждую запись
+                performed_work.save()  # Сохраняем каждую запись в performed_work
                 print(f"WorkPerformed сохранено: {performed_work}")
+
+                # Сохранение в динамическую таблицу
+                cursor.execute(f"""
+                                        INSERT INTO {vin_code_table} (date, mileage, work_name, used_parts, quantity, article)
+                                        VALUES (%s, %s, %s, %s, %s, %s)
+                                    """, [date, mileage, work_names[i], used_parts[i], quantities[i], articles[i]])
+                print("Запись успешно сохранена в таблицу:", vin_code_table)
 
         except Exception as e:
             print(f"Ошибка при сохранении в WorkPerformed: {e}")
