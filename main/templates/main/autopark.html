@@ -40,7 +40,14 @@
 <body>
     <div class="container">
         <h1>Автопарк</h1>
+        {% if user.is_authenticated %}
+    {% if user.is_staff or user.is_superuser %}
+
         <a href="{% url 'add_car' %}" class="add-car-button">Добавить автомобиль</a>
+    {% else %}
+     <p class="no-access-message"></p>
+    {% endif %}
+{% endif %}
         <div>
             {% for car in cars %}
                 <a href="{% url 'car_detail' car.vin_code %}" class="car-item">

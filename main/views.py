@@ -5,38 +5,89 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
 from .models import (Item, EngineParts, TransmissionParts, PneumaticParts, ChassisParts,
 BrakeParts, SteeringParts, ElectricityParts, ClimateParts, CarBodyParts, InteriorParts, MaintenanceParts,
-LiquidsParts, Brand, Model, Car, WorkPerformed, Fault, Work, Mechanic)
+LiquidsParts, Brand, Model, Car, Fault, Mechanic)
 from .forms import ItemForm, CarForm, WorkForm, FaultForm, MechanicForm
 from django.db.models import Q
 from django.db import connection
 from django.forms import modelformset_factory
 from .models import WorkPerformed
+from django.contrib import messages
 import logging
+import random
 
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group, User
-from django.shortcuts import render, redirect
+from .forms import RegisterUserForm
 
 
 
+# Представление для регистрации нового пользователя
+# Представление для регистрации нового пользователя
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
 def register_user(request):
-    if not request.user.is_superuser:  # Только администратор может регистрировать пользователей
-        return redirect('home')
-
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = RegisterUserForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            group_name = request.POST.get('group')
-            group = Group.objects.get(name=group_name)
-            user.groups.add(group)
+            group_name = form.cleaned_data.get('group')
+            prefix = ''
+            if group_name == 'Водители':
+                prefix = 'driver'
+            elif group_name == 'Механики':
+                prefix = 'mechanic'
+            elif group_name == 'Администраторы':
+                prefix = 'admin'
+
+            while True:
+                username = f"{prefix}{random.randint(1000, 9999)}"
+                if not User.objects.filter(username=username).exists():
+                    break
+
+            # Создание пользователя
+            user = User.objects.create_user(
+                username=username,
+                password=form.cleaned_data.get('password1'),
+                first_name=form.cleaned_data.get('first_name'),
+                last_name=form.cleaned_data.get('last_name')
+            )
+            user.is_active = True
+            user.save()
+
+            # Добавление пользователя в группу в зависимости от выбранной роли
+            try:
+                group = Group.objects.get(name=group_name)
+                user.groups.add(group)
+            except Group.DoesNotExist:
+                messages.error(request, f'Группа "{group_name}" не найдена. Обратитесь к администратору.')
+                user.delete()
+                return render(request, 'main/register.html', {'form': form})
+
+            messages.success(request,
+                             f'Пользователь "{username}" успешно зарегистрирован и добавлен в группу "{group_name}".')
             return redirect('home')
     else:
-        form = UserCreationForm()
+        form = RegisterUserForm()
 
-    return render(request, 'main/register.html', {'form': form, 'groups': ['Водители', 'Механики', 'Администраторы']})
+    return render(request, 'main/register.html', {'form': form})
+
+
+# Ограничение доступа по ролям
+@login_required
+def restricted_view(request):
+    if request.user.groups.filter(name='Механики').exists():
+        # Доступ для механиков
+        return render(request, 'main/mechanic_view.html')
+    elif request.user.groups.filter(name='Водители').exists():
+        # Доступ для водителей (только просмотр)
+        return render(request, 'main/driver_view.html')
+    elif request.user.is_superuser:
+        # Доступ для администратора
+        return render(request, 'main/admin_view.html')
+    else:
+        messages.error(request, 'У вас нет доступа к этой странице.')
+        return redirect('home')
 
 logger = logging.getLogger(__name__)
 
@@ -579,6 +630,8 @@ def add_mechanic(request):
     else:
         form = MechanicForm()
     return render(request, 'main/add_mechanic.html', {'form': form})
+
+@login_required
 def mechanic_detail(request, pk):
     mechanic = get_object_or_404(Mechanic, pk=pk)
     table_name = f"{mechanic.first_name}_{mechanic.last_name}_{mechanic.id}".replace(' ', '_')

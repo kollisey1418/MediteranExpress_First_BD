@@ -5,9 +5,32 @@
 
 {% block content %}
 <div class="main-content">
+
+{% if user.is_authenticated %}
+    {% if user.is_staff or user.is_superuser %}
     <a href="{% url 'warehouse_new' %}" class="box">Новый склад</a>
+      {% else %}
+     <p class="no-access-message"></p>
+    {% endif %}
+{% endif %}
+
+{% if user.is_authenticated %}
+    {% if user.is_staff or user.is_superuser %}
     <a href="#" class="box">Старый склад</a>
+      {% else %}
+     <p class="no-access-message"></p>
+    {% endif %}
+{% endif %}
+
     <a href="{% url 'mechanics_list' %}" class="box">Механики</a>
+
+{% if user.is_authenticated %}
+    {% if user.is_staff or user.is_superuser %}
     <a href="#" class="box">Инструмент</a>
+      {% else %}
+     <p class="no-access-message"></p>
+    {% endif %}
+{% endif %}
+
 </div>
 {% endblock %}

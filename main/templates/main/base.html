@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}MediteranExpress{% endblock %}</title>
-   {% load static %}
+    {% load static %}
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <style>
         body {
@@ -22,6 +22,25 @@
             align-items: center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .username {
+            font-weight: bold;
+        }
+        .sign-out, .sign-in {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .sign-out:hover, .sign-in:hover {
+            background-color: #0056b3;
+        }
         .header .title {
             font-size: 24px;
             color: #0056b3;
@@ -32,13 +51,6 @@
             text-decoration: none;
             color: #333;
             font-size: 18px;
-        }
-        .header .sign-in {
-            background-color: #0056b3;
-            color: #fff;
-            padding: 5px 10px;
-            border: none;
-            cursor: pointer;
         }
         .main-content {
             display: flex;
@@ -66,9 +78,18 @@
     <div class="header">
         <a href="{% url 'home' %}" class="home-link">🏠</a>
         <div class="title">MediteranExpress</div>
+        {% if user.is_authenticated %}
+        <div class="user-info">
+            <span class="username">{{ user.username }}</span>
+            <a href="{% url 'login' %}">
+                <button class="sign-out">Выйти</button>
+            </a>
+        </div>
+        {% else %}
         <a href="{% url 'login' %}">
-    <button class="sign-in">Sign in</button>
-</a>
+            <button class="sign-in">Sign in</button>
+        </a>
+        {% endif %}
     </div>
     {% block content %}{% endblock %}
 </body>

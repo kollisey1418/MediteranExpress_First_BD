@@ -1,6 +1,8 @@
 # main/forms.py
 
 from django import forms
+from django.contrib.auth.models import User
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from .models import Car, WorkPerformed, Fault, Brand, Model, Item, Mechanic
 
@@ -113,3 +115,29 @@ class MechanicForm(forms.ModelForm):
     class Meta:
         model = Mechanic
         fields = ['first_name', 'last_name']
+
+class RegisterUserForm(forms.ModelForm):
+    password1 = forms.CharField(widget=forms.PasswordInput, label='Пароль')
+    password2 = forms.CharField(widget=forms.PasswordInput, label='Повторите пароль')
+    group = forms.ChoiceField(choices=[
+        ('Водители', 'Водители'),
+        ('Механики', 'Механики'),
+        ('Администраторы', 'Администраторы')
+    ], label='Группа')
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'password1', 'password2', 'group']
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+        if password1 and password2 and password1 != password2:
+            raise ValidationError('Пароли не совпадают.')
+        return password2
+
+    def clean_group(self):
+        group = self.cleaned_data.get('group')
+        if not group:
+            raise ValidationError('Необходимо выбрать группу.')
+        return group
