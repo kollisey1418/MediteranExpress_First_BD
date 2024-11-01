@@ -1,17 +1,13 @@
 {% extends 'main/base.html' %}
 
-{% block title %}Список Механиков - MediteranExpress{% endblock %}
+{% block title %}Список Водителей - MediteranExpress{% endblock %}
 
 {% block content %}
-    <a href="{% url 'garage' %}" class="back-button">Назад</a>
-     <h2 class="section-title">Список Механиков</h2>
-
-
-
+        <a href="{% url 'autopark_main' %}" class="back-button">Назад</a>
 
     {% if user.is_authenticated %}
 
-
+        <h2 class="section-title">Список Водителей</h2>
         <table class="mechanic-table">
             <thead>
                 <tr>
@@ -20,14 +16,14 @@
                 </tr>
             </thead>
             <tbody>
-                {% for mechanic in mechanics %}
+                {% for driver in drivers %}
                     <tr class="clickable-row">
-                        <td>{{ mechanic.first_name }}</td>
-                        <td>{{ mechanic.last_name }}</td>
+                        <td>{{ driver.first_name }}</td>
+                        <td>{{ driver.last_name }}</td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="2">Нет механиков</td>
+                        <td colspan="2">Нет водителей</td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -40,8 +36,6 @@
             }
         </script>
     {% endif %}
-</div>
-
 <div id="loginModal" class="modal">
     <div class="modal-content">
         <h2>Авторизация</h2>
@@ -177,12 +171,7 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         text-decoration: none;
     }
-.main-content {
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 20px;
-        text-align: left;
-    }
+
 
     .mechanic-table {
         width: 100%;
@@ -209,6 +198,26 @@
         font-size: 24px;
         font-weight: bold;
         margin-top: 0;
+    }
+.navigation {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .btn-back {
+        display: inline-block;
+        padding: 8px 15px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+    }
+
+    .btn-back:hover {
+        background-color: #0056b3;
     }
 </style>
 {% endblock %}

@@ -2,6 +2,7 @@
 {% block title %}Карточка автомобиля - MediteranExpress{% endblock %}
 
 {% block content %}
+            <a href="{% url 'autopark_main' %}" class="back-button">Назад</a>
 <style>
     .container {
         width: 80%;
@@ -156,6 +157,26 @@
 .remove-work-field:hover {
     background-color: #d43f3f; /* Темнее при наведении */
 }
+
+    .back-button {
+        display: inline-block;
+        padding: 8px 12px;
+        margin: 10px 0;
+        font-size: 14px;
+        color: white;
+        background-color: #007bff;
+        border: none;
+        border-radius: 4px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color 0.3s, box-shadow 0.3s;
+    }
+
+    .back-button:hover {
+        background-color: #0056b3;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-decoration: none;
+    }
 </style>
 
 <div class="container">
@@ -195,17 +216,20 @@
                     <th>Запчасти</th>
                     <th>Кол-во</th>
                     <th>Артикул</th>
+                    <th>Выполнил</th>
                 </tr>
             </thead>
             <tbody>
                 {% for work in works %}
                     <tr>
+
                         <td>{{ work.0 }}</td>
                         <td>{{ work.1 }}</td>
                         <td>{{ work.2 }}</td>
                         <td>{{ work.3 }}</td>
                         <td>{{ work.4 }}</td>
                         <td>{{ work.5 }}</td>
+                        <td>{{ work.6 }}</td>
                     </tr>
                 {% empty %}
                     <tr>
@@ -246,8 +270,6 @@
         <label for="article">Артикул:</label>
         <input type="text" id="article" name="article[]" required>
 
-        <label for="part_manufacturer">Производитель:</label>
-        <input type="text" id="part_manufacturer" name="part_manufacturer[]" required>
     </div>
 </div>
 
@@ -299,10 +321,7 @@
         </div>
 
 
-        <div class="field-group">
-            <label for="part_manufacturer">Производитель:</label>
-            <input type="text" name="part_manufacturer[]" required>
-        </div>
+
         <button type="button" class="remove-work-field" onclick="removeWorkFields(this)">&times;</button>
     `;
     workFieldsContainer.appendChild(workFields);

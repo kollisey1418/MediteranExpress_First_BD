@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
+
 class Brand(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
@@ -25,6 +26,7 @@ class Car(models.Model):
     state_number = models.CharField(max_length=20)  # Госномер
     status = models.CharField(max_length=50)  # Статус
 
+
     def __str__(self):
         return f"{self.brand} {self.model} ({self.vin_code})"
 
@@ -37,6 +39,7 @@ class WorkPerformed(models.Model):
     article = models.CharField(max_length=255)
     part_manufacturer = models.CharField(max_length=255, blank=True, null=True)
     date = models.DateTimeField(default=timezone.now)
+    executor = models.CharField(max_length=255, null=True, blank=True)
 
     from django.db import models
 

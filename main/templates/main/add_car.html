@@ -85,14 +85,6 @@
         <form method="post">
             {% csrf_token %}
             <div>
-                <label for="id_first_name">Имя:</label>
-                <input type="text" name="first_name" id="id_first_name">
-            </div>
-            <div>
-                <label for="id_last_name">Фамилия:</label>
-                <input type="text" name="last_name" id="id_last_name">
-            </div>
-            <div>
                 <label for="id_brand">Brand:</label>
                 <input type="text" name="brand" id="id_brand">
             </div>
@@ -110,7 +102,7 @@
             </div>
             <div>
                 <label for="id_engine_volume">Engine volume:</label>
-                <input type="text" name="engine_volume" id="id_engine_volume">
+                <input type="number" step="0.1" name="engine_volume" id="id_engine_volume" required>
             </div>
             <div>
                 <label for="id_year_of_manufacture">Year of manufacture:</label>
@@ -131,9 +123,10 @@
             <div>
                 <label for="id_status">Status:</label>
                 <select name="status" id="id_status">
-                    <option value="Исправен">Исправен</option>
-                    <option value="Неисправен">Неисправен</option>
+                    <option value="Исправен на линии">Исправен на линии</option>
+                    <option value="Неисправен на линии">Неисправен на линии</option>
                     <option value="В ремонте">В ремонте</option>
+                    <option value="Утиль">Утиль</option>
                 </select>
             </div>
             <button type="submit">Сохранить</button>

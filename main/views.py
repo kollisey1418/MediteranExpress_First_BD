@@ -20,6 +20,7 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group, User
 from .forms import RegisterUserForm
+from datetime import datetime
 
 
 
@@ -136,8 +137,10 @@ def car_detail(request, vin_code):
 
     # Извлекаем данные о работах из соответствующей таблицы
     with connection.cursor() as cursor:
-        cursor.execute(f"SELECT date, mileage, work_name, used_parts, quantity, article FROM {vin_code_table}")
+        cursor.execute(f"SELECT date, mileage, work_name, used_parts, quantity, article, executor FROM {vin_code_table}")
         work_records = cursor.fetchall()
+
+
 
     # Подготавливаем данные для шаблона
     context = {
@@ -148,6 +151,12 @@ def car_detail(request, vin_code):
     return render(request, 'main/car_detail.html', context)
 def home(request):
     return render(request, 'main/home.html')
+
+def autopark_main(request):
+    return render(request, 'main/autopark_main.html')
+
+def drivers(request):
+    return render(request, 'main/drivers.html')
 
 def garage(request):
     return render(request, 'main/garage.html')
@@ -206,28 +215,36 @@ def add_car(request):
     if request.method == 'POST':
         form = CarForm(request.POST)
         if form.is_valid():
+            try:
+                car = form.save()
+                vin_code_table = f"work_{car.vin_code.replace('-', '_')}"
 
-            car = form.save()
+                # Создаем таблицу, если её не существует
+                with connection.cursor() as cursor:
+                    cursor.execute(f"""
+                    CREATE TABLE IF NOT EXISTS {vin_code_table} (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        date TEXT NOT NULL,
+                        mileage INTEGER NOT NULL,
+                        work_name TEXT NOT NULL,
+                        used_parts TEXT,
+                        quantity INTEGER,
+                        article TEXT,
+                        executor TEXT
+                    );
+                    """)
+                messages.success(request, 'Автомобиль успешно добавлен.')
+                return redirect('home')
+            except Exception as e:
+                messages.error(request, f'Ошибка при сохранении автомобиля: {e}')
+                print(f"Ошибка при сохранении автомобиля: {e}")
+        else:
+            messages.error(request, 'Форма заполнена некорректно.')
+            print(f"Ошибки формы: {form.errors}")
 
-            vin_code_table = f"work_{car.vin_code.replace('-', '_')}"
-
-            from django.db import connection
-            with connection.cursor() as cursor:
-                cursor.execute(f"""
-                CREATE TABLE IF NOT EXISTS {vin_code_table} (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    date TEXT NOT NULL,
-                    mileage INTEGER NOT NULL,
-                    work_name TEXT NOT NULL,
-                    used_parts TEXT,
-                    quantity INTEGER,
-                    article TEXT
-                );
-                """)
     else:
         form = CarForm()
 
-    # Если запрос не POST, отображаем форму для добавления автомобиля
     return render(request, 'main/add_car.html', {'form': form})
 
 
@@ -262,7 +279,6 @@ def save_work_or_add(request, vin_code):
         used_parts = request.POST.getlist('used_parts[]')
         quantities = request.POST.getlist('quantity[]')
         articles = request.POST.getlist('article[]')
-        part_manufacturers = request.POST.getlist('part_manufacturer[]')
         print(f"work_names: {work_names}")
         print(f"mileages: {mileages}")
 
@@ -286,9 +302,9 @@ def save_work_or_add(request, vin_code):
     print(f"Длина part_names: {len(used_parts)}")
     print(f"Длина quantities: {len(quantities)}")
     print(f"Длина articles: {len(articles)}")
-    print(f"Длина part_manufacturers: {len(part_manufacturers)}")
 
-    if len(work_names) == len(used_parts) == len(quantities) == len(articles) == len(part_manufacturers):
+
+    if len(work_names) == len(used_parts) == len(quantities) == len(articles):
 
         vin_code_table = f"work_{vin_code.replace('-', '_')}"
 
@@ -296,7 +312,10 @@ def save_work_or_add(request, vin_code):
             # Перебираем все записи и сохраняем каждую по отдельности
             with connection.cursor() as cursor:
                 for i in range(len(work_names)):
-                    print(f"Сохраняемые данные: {work_names[i]}, {mileages}, {used_parts[i]}, {quantities[i]}, {articles[i]}, {part_manufacturers[i]}")
+                    print(f"Сохраняемые данные: {work_names[i]}, {mileages}, {used_parts[i]}, {quantities[i]}, {articles[i]},")
+
+                    # Получаем исполнителя
+                    executor = f"{request.user.first_name} {request.user.last_name}"
 
                 performed_work = WorkPerformed(
                     vin_code=car,
@@ -306,7 +325,7 @@ def save_work_or_add(request, vin_code):
                     used_parts=used_parts[i],
                     quantity=quantities[i],
                     article=articles[i],
-                    part_manufacturer=part_manufacturers[i]
+                    executor = executor
                 )
                 # Вывод всех списков для проверки
                 print(f"work_names: {work_names}")
@@ -314,17 +333,30 @@ def save_work_or_add(request, vin_code):
                 print(f"used_parts: {used_parts}")
                 print(f"quantities: {quantities}")
                 print(f"articles: {articles}")
-                print(f"part_manufacturers: {part_manufacturers}")
+
 
 
                 performed_work.save()  # Сохраняем каждую запись в performed_work
                 print(f"WorkPerformed сохранено: {performed_work}")
 
+                if not date or date == '':
+                    date = timezone.now()  # Используем текущую дату и время
+                else:
+                    # Преобразуем дату в объект datetime
+                    if isinstance(date, str):
+                        date = datetime.strptime(date, "%Y-%m-%d")
+                    # Преобразуем в строку нужного формата и добавляем текущее время
+                    now = timezone.now()
+                    date = date.replace(hour=now.hour, minute=now.minute, second=now.second)
+                    date = date.strftime("%Y-%m-%d %H:%M:%S")
+
                 # Сохранение в динамическую таблицу
-                cursor.execute(f"""
-                                        INSERT INTO {vin_code_table} (date, mileage, work_name, used_parts, quantity, article)
-                                        VALUES (%s, %s, %s, %s, %s, %s)
-                                    """, [date, mileage, work_names[i], used_parts[i], quantities[i], articles[i]])
+                sql_query = f"""
+                                           INSERT INTO {vin_code_table} (date, mileage, work_name, used_parts, quantity, article, executor)
+                                           VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                       """
+                cursor.execute(sql_query,
+                               (date, mileage, work_names[i], used_parts[i], quantities[i], articles[i], executor))
                 print("Запись успешно сохранена в таблицу:", vin_code_table)
 
         except Exception as e:
@@ -599,13 +631,20 @@ def delete_item(request, item_id):
     return redirect('warehouse_new')
 
 
-
-
-
-
 def mechanics_list(request):
-    mechanics = Mechanic.objects.all()  # Получаем список всех механиков из БД
+    # Фильтрация пользователей, которые принадлежат группе "Механики"
+    mechanics_group = Group.objects.get(name='Механики')
+    mechanics = User.objects.filter(groups=mechanics_group)
+
     return render(request, 'main/mechanics.html', {'mechanics': mechanics})
+
+
+def drivers(request):
+    # Фильтрация пользователей, которые принадлежат группе "Водители"
+    drivers_group = Group.objects.get(name='Водители')
+    drivers = User.objects.filter(groups=drivers_group)
+
+    return render(request, 'main/drivers.html', {'drivers': drivers})
 
 def add_mechanic(request):
     if request.method == 'POST':

@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 {% extends 'main/base.html' %}
 {% block content %}
+     <a href="{% url 'autopark_main' %}" class="back-button">Назад</a>
 <html lang="en">
 
 <head>
 
     <meta charset="UTF-8">
-    <title>Автопарк</title>
+    <title>Список автобусов</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <style>
@@ -35,11 +36,32 @@
         .car-item:hover {
             background-color: #e2e6ea;
         }
+
+
+        .back-button {
+        display: inline-block;
+        padding: 8px 12px;
+        margin: 10px 0;
+        font-size: 14px;
+        color: white;
+        background-color: #007bff;
+        border: none;
+        border-radius: 4px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color 0.3s, box-shadow 0.3s;
+    }
+
+        .back-button:hover {
+        background-color: #0056b3;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-decoration: none;
+    }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Автопарк</h1>
+        <h1>Список автобусов</h1>
         {% if user.is_authenticated %}
     {% if user.is_staff or user.is_superuser %}
 
