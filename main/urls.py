@@ -29,6 +29,7 @@ urlpatterns = [
     path('autopark_main/', views.autopark_main, name='autopark_main'),
     path('drivers/', views.drivers, name='drivers'),
     path('parts-list/', views.parts_list, name='parts_list'),
+    path('update_car_status/', views.update_car_status, name='update_car_status'),
 
 
 

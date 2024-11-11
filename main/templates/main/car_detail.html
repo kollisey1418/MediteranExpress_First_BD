@@ -228,12 +228,19 @@
                 <strong>Марка:</strong> {{ car.brand }}<br>
                 <strong>Модель:</strong> {{ car.model }}<br>
                 <strong>ВИН-код:</strong> {{ car.vin_code }}<br>
-                <strong>Год выпуска:</strong> {{ car.year }}<br>
+                <strong>Год выпуска:</strong> {{ car.year_of_manufacture }}<br>
                 <strong>Пробег:</strong> {{ car.mileage }}<br>
             </div>
             <div class="car-detail">
                 <strong>Объем двигателя:</strong> {{ car.engine_volume }}<br>
-                <strong>Тип КПП:</strong> {{ car.transmission_type }}<br>
+                <strong>Тип КПП:</strong> {{ car.gearbox_type }}<br>
+                <strong>Статус:</strong>
+                <select id="status" name="status" onchange="updateCarStatus('{{ car.vin_code }}')">
+                    <option value="Исправен на линии" {% if car.status == "Исправен на линии" %}selected{% endif %}>Исправен на линии</option>
+                    <option value="Неисправен на линии" {% if car.status == "Неисправен на линии" %}selected{% endif %}>Неисправен на линии</option>
+                    <option value="В ремонте" {% if car.status == "В ремонте" %}selected{% endif %}>В ремонте</option>
+                    <option value="Утиль" {% if car.status == "Утиль" %}selected{% endif %}>Утиль</option>
+                </select><br>
             </div>
         </div>
     </div>
@@ -421,6 +428,30 @@ function setPartsFieldValue(usedPartsFieldId, articleFieldId, usedPartsValue, ar
     function closePartsPopup() {
         document.getElementById('partsPopup').style.display = 'none';
         document.querySelector('.overlay').style.display = 'none';
+    }
+
+    function updateCarStatus(vinCode) {
+        const status = document.getElementById('status').value;
+        console.log(`Updating status for car with VIN ${vinCode} to ${status}`);
+        fetch(`/update_car_status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                vin_code: vinCode,
+                status: status
+            })
+        }).then(response => {
+            if (response.ok) {
+                console.log('Status updated successfully');
+            } else {
+                console.error('Failed to update status');
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+        });
     }
 </script>
 {% endblock %}

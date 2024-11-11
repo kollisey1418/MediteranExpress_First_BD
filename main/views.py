@@ -22,6 +22,9 @@ from django.contrib.auth.models import Group, User
 from .forms import RegisterUserForm
 from datetime import datetime
 from django.core.exceptions import ValidationError
+from django.views.decorators.csrf import csrf_exempt
+import json
+
 
 
 
@@ -150,6 +153,29 @@ def car_detail(request, vin_code):
     }
 
     return render(request, 'main/car_detail.html', context)
+
+@csrf_exempt
+def update_car_status(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            vin_code = data.get('vin_code')
+            new_status = data.get('status')
+
+            # Найти автомобиль по VIN-коду и обновить его статус
+            car_instance = Car.objects.get(vin_code=vin_code)
+            car_instance.status = new_status
+            car_instance.save()
+
+            return JsonResponse({'message': 'Status updated successfully'}, status=200)
+        except Car.DoesNotExist:
+            return JsonResponse({'error': 'Car not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    else:
+        return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
 def home(request):
     return render(request, 'main/home.html')
 
@@ -266,6 +292,8 @@ def edit_car(request, vin_code):
 from django.utils import timezone
 
 
+from django.utils import timezone
+
 def save_work_or_add(request, vin_code):
     print("Функция save_work_or_add вызвана")
     car = get_object_or_404(Car, vin_code=vin_code)
@@ -281,8 +309,8 @@ def save_work_or_add(request, vin_code):
         quantities = request.POST.getlist('quantity[]')
         articles = request.POST.getlist('article[]')
 
+        # Проверка, что все списки имеют одинаковую длину
         if len(work_names) == len(used_parts) == len(quantities) == len(articles):
-            # Перебираем все работы и сохраняем их по отдельности через форму WorkForm
             for i in range(len(work_names)):
                 # Создаем данные для формы WorkForm
                 data = {
@@ -292,7 +320,6 @@ def save_work_or_add(request, vin_code):
                     'used_parts': used_parts[i],
                     'quantity': quantities[i],
                     'article': articles[i],
-                    'part_manufacturer': "",  # Если у вас есть поле производителя запчастей
                 }
 
                 # Создаем форму с данными
@@ -301,7 +328,7 @@ def save_work_or_add(request, vin_code):
 
                 if form.is_valid():
                     try:
-                        # Сохраняем работу через форму, чтобы количество запчастей списалось
+                        # Сохраняем работу через форму
                         performed_work = form.save(commit=False)
                         performed_work.vin_code = car
                         performed_work.executor = f"{request.user.first_name} {request.user.last_name}"
@@ -317,8 +344,6 @@ def save_work_or_add(request, vin_code):
                             """
                             # Форматируем дату для вставки
                             date = performed_work.date
-                            if isinstance(date, str):
-                                date = timezone.datetime.strptime(date, "%Y-%m-%d")
                             now = timezone.now()
                             date = date.replace(hour=now.hour, minute=now.minute, second=now.second)
                             date = date.strftime("%Y-%m-%d %H:%M:%S")
@@ -328,9 +353,16 @@ def save_work_or_add(request, vin_code):
                                                        performed_work.article, performed_work.executor))
                             print("Запись успешно сохранена в таблицу:", vin_code_table)
 
+                        # Обновляем пробег автомобиля
+                        if int(mileages[i]) > car.mileage:
+                            car.mileage = mileages[i]
+                            car.save()
+                            print(f"Пробег автомобиля обновлен: {car.mileage}")
+
                     except ValidationError as e:
                         print(f"Ошибка валидации при сохранении работы: {e}")
                 else:
+                    # Печать ошибок формы, если работа не проходит валидацию
                     print(f"Ошибки формы: {form.errors}")
 
             # Перенаправление на страницу деталей автомобиля после сохранения всех работ
@@ -341,7 +373,6 @@ def save_work_or_add(request, vin_code):
     # Показ пустой формы, если метод не POST
     form = WorkForm()
     return render(request, 'main/car_detail.html', {'form': form, 'car': car, 'vin_code': vin_code})
-
 
 #поиск запчастей
 def search_part(request):
@@ -701,3 +732,5 @@ def add_mechanic_work(request, pk):
             return JsonResponse({'success': False, 'message': str(e)})
 
         return JsonResponse({'success': False, 'message': 'Неверный метод запроса'})
+
+

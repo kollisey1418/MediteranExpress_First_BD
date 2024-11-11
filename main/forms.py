@@ -44,11 +44,10 @@ class CarForm(forms.ModelForm):
 
 class WorkForm(forms.ModelForm):
     date = forms.DateTimeField(widget=forms.HiddenInput(), required=False)
-    
 
     class Meta:
         model = WorkPerformed
-        fields = ['date','mileage', 'work_name', 'used_parts', 'quantity', 'article', 'part_manufacturer']
+        fields = ['date', 'mileage', 'work_name', 'used_parts', 'quantity', 'article', 'part_manufacturer']
 
     def __init__(self, *args, **kwargs):
         self.car = kwargs.pop('car', None)
@@ -70,7 +69,7 @@ class WorkForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super(WorkForm, self).save(commit=False)
 
-        # Снижение количества запчастей на складе
+        # Снижение количества запчастей на складе, если запчасть найдена
         part_article = self.cleaned_data.get('article')
         if part_article:
             try:
@@ -79,9 +78,11 @@ class WorkForm(forms.ModelForm):
                     part.quantity -= 1
                     part.save()
                 else:
+                    # Запчасть есть в базе, но недостаточное количество
                     raise ValidationError('Недостаточное количество запчастей на складе.')
             except Item.DoesNotExist:
-                raise ValidationError('Запчасть не найдена на складе.')
+                # Если запчасть не найдена, продолжить без ошибок
+                pass  # Запчасть отсутствует на складе, но мы продолжаем сохранение
 
         if commit:
             instance.save()
