@@ -1,0 +1,106 @@
+{% extends 'main/base.html' %}
+{% block title %}Список запчастей - MediteranExpress{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h2>Список запчастей</h2>
+        <input type="text" id="search" placeholder="Поиск запчастей..." onkeyup="filterParts()">
+        <table id="partsTable" class="parts-table">
+            <thead>
+                <tr>
+                    <th>Название запчасти</th>
+                    <th>Артикул</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for part in parts %}
+                    <tr class="{% cycle 'row-white' 'row-gray' %}">
+                        <td>{{ part.name }}</td>
+                        <td>{{ part.article }}</td>
+                        <td>
+                            <button onclick="selectPart('{{ part.name }}', '{{ part.article }}')">Выбрать</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <style>
+        .row-white {
+            background-color: #ffffff;
+        }
+        .row-gray {
+            background-color: #f2f2f2;
+        }
+        .parts-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .parts-table th, .parts-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .parts-table th {
+            background-color: #f2f2f2;
+        }
+    </style>
+
+    <script>
+        function filterParts() {
+            const searchInput = document.getElementById('search').value.toLowerCase();
+            const rows = document.querySelectorAll('#partsTable tbody tr');
+            rows.forEach(row => {
+                const partName = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+                const partArticle = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                if (partName.includes(searchInput) || partArticle.includes(searchInput)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function selectPart(partName, partArticle) {
+            // Получаем идентификаторы полей из URL параметров
+            const urlParams = new URLSearchParams(window.location.search);
+            const usedPartsFieldId = urlParams.get('targetUsedPartsFieldId');
+            const articleFieldId = urlParams.get('targetArticleFieldId');
+
+            // Проверяем, что идентификаторы были переданы
+            if (usedPartsFieldId && articleFieldId) {
+                console.log("Передаем данные в родительское окно:", usedPartsFieldId, articleFieldId);
+                try {
+                    // Находим родительское окно
+                    const parentWindow = window.opener;
+                    if (parentWindow) {
+                        // Находим поля в родительском окне по переданным идентификаторам
+                        const usedPartsInput = parentWindow.document.querySelector(`[data-field-id="${usedPartsFieldId}"]`);
+                        const articleInput = parentWindow.document.querySelector(`[data-field-id="${articleFieldId}"]`);
+
+                        // Проверяем наличие полей и передаем значения
+                        if (usedPartsInput && articleInput) {
+                            usedPartsInput.value = partName;
+                            articleInput.value = partArticle;
+                            console.log("Успешно переданы значения для:", usedPartsFieldId, articleFieldId);
+                        } else {
+                            console.error("Не удалось найти поля ввода для:", usedPartsFieldId, articleFieldId);
+                        }
+                    } else {
+                        console.error("Не удалось найти родительское окно.");
+                    }
+                } catch (error) {
+                    console.error("Ошибка при попытке передать данные:", error);
+                }
+            } else {
+                console.error("Не удалось получить идентификаторы полей из URL.");
+            }
+
+            // Закрываем текущее окно после добавления данных
+            window.close();
+        }
+    </script>
+{% endblock %}

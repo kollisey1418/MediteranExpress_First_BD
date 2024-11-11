@@ -21,6 +21,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group, User
 from .forms import RegisterUserForm
 from datetime import datetime
+from django.core.exceptions import ValidationError
 
 
 
@@ -267,127 +268,96 @@ from django.utils import timezone
 
 def save_work_or_add(request, vin_code):
     print("Функция save_work_or_add вызвана")
-    # Получаем объект автомобиля
     car = get_object_or_404(Car, vin_code=vin_code)
 
     if request.method == 'POST':
         print(f"POST данные: {request.POST}")
-        # Получаем списки данных из формы
+
+        # Получаем данные из формы
         dates = request.POST.getlist('date')
         mileages = request.POST.getlist('mileage')
         work_names = request.POST.getlist('work_name[]')
         used_parts = request.POST.getlist('used_parts[]')
         quantities = request.POST.getlist('quantity[]')
         articles = request.POST.getlist('article[]')
-        print(f"work_names: {work_names}")
-        print(f"mileages: {mileages}")
 
-        # Получаем дату и пробег из основной формы
-        date = request.POST.get('date')
-        mileage = request.POST.get('mileage')
+        if len(work_names) == len(used_parts) == len(quantities) == len(articles):
+            # Перебираем все работы и сохраняем их по отдельности через форму WorkForm
+            for i in range(len(work_names)):
+                # Создаем данные для формы WorkForm
+                data = {
+                    'date': dates[i] if dates else timezone.now(),
+                    'mileage': mileages[i],
+                    'work_name': work_names[i],
+                    'used_parts': used_parts[i],
+                    'quantity': quantities[i],
+                    'article': articles[i],
+                    'part_manufacturer': "",  # Если у вас есть поле производителя запчастей
+                }
 
-        mileage = int(mileage)  # Преобразуем строку в целое число
+                # Создаем форму с данными
+                form = WorkForm(data)
+                form.car = car
 
-        # Если дата пустая, используем текущую дату и время с временной зоной
-        if not date or date == '':
-            date = timezone.now()  # Используем текущую дату и время
-        else:
-            # Преобразуем дату в формат datetime и учитываем временную зону
-            date = timezone.make_aware(timezone.datetime.strptime(date, "%Y-%m-%d"), timezone.get_current_timezone())
-            # Добавляем текущее время к указанной дате
-            now = timezone.now()
-            date = date.replace(hour=now.hour, minute=now.minute, second=now.second)
+                if form.is_valid():
+                    try:
+                        # Сохраняем работу через форму, чтобы количество запчастей списалось
+                        performed_work = form.save(commit=False)
+                        performed_work.vin_code = car
+                        performed_work.executor = f"{request.user.first_name} {request.user.last_name}"
+                        performed_work.save()  # Сохраняем объект в базу
+                        print(f"WorkForm сохранено: {form.cleaned_data}")
 
-    print(f"Длина work_names: {len(work_names)}")
-    print(f"Длина part_names: {len(used_parts)}")
-    print(f"Длина quantities: {len(quantities)}")
-    print(f"Длина articles: {len(articles)}")
+                        # Сохранение в динамическую таблицу
+                        vin_code_table = f"work_{vin_code.replace('-', '_')}"
+                        with connection.cursor() as cursor:
+                            sql_query = f"""
+                                INSERT INTO {vin_code_table} (date, mileage, work_name, used_parts, quantity, article, executor)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            """
+                            # Форматируем дату для вставки
+                            date = performed_work.date
+                            if isinstance(date, str):
+                                date = timezone.datetime.strptime(date, "%Y-%m-%d")
+                            now = timezone.now()
+                            date = date.replace(hour=now.hour, minute=now.minute, second=now.second)
+                            date = date.strftime("%Y-%m-%d %H:%M:%S")
 
+                            cursor.execute(sql_query, (date, performed_work.mileage, performed_work.work_name,
+                                                       performed_work.used_parts, performed_work.quantity,
+                                                       performed_work.article, performed_work.executor))
+                            print("Запись успешно сохранена в таблицу:", vin_code_table)
 
-    if len(work_names) == len(used_parts) == len(quantities) == len(articles):
-
-        vin_code_table = f"work_{vin_code.replace('-', '_')}"
-
-        try:
-            # Перебираем все записи и сохраняем каждую по отдельности
-            with connection.cursor() as cursor:
-                for i in range(len(work_names)):
-                    print(f"Сохраняемые данные: {work_names[i]}, {mileages}, {used_parts[i]}, {quantities[i]}, {articles[i]},")
-
-                    # Получаем исполнителя
-                    executor = f"{request.user.first_name} {request.user.last_name}"
-
-                performed_work = WorkPerformed(
-                    vin_code=car,
-                    date=date,
-                    mileage=mileage,
-                    work_name=work_names[i],
-                    used_parts=used_parts[i],
-                    quantity=quantities[i],
-                    article=articles[i],
-                    executor = executor
-                )
-                # Вывод всех списков для проверки
-                print(f"work_names: {work_names}")
-                print(f"mileages: {mileages}")
-                print(f"used_parts: {used_parts}")
-                print(f"quantities: {quantities}")
-                print(f"articles: {articles}")
-
-
-
-                performed_work.save()  # Сохраняем каждую запись в performed_work
-                print(f"WorkPerformed сохранено: {performed_work}")
-
-                if not date or date == '':
-                    date = timezone.now()  # Используем текущую дату и время
+                    except ValidationError as e:
+                        print(f"Ошибка валидации при сохранении работы: {e}")
                 else:
-                    # Преобразуем дату в объект datetime
-                    if isinstance(date, str):
-                        date = datetime.strptime(date, "%Y-%m-%d")
-                    # Преобразуем в строку нужного формата и добавляем текущее время
-                    now = timezone.now()
-                    date = date.replace(hour=now.hour, minute=now.minute, second=now.second)
-                    date = date.strftime("%Y-%m-%d %H:%M:%S")
+                    print(f"Ошибки формы: {form.errors}")
 
-                # Сохранение в динамическую таблицу
-                sql_query = f"""
-                                           INSERT INTO {vin_code_table} (date, mileage, work_name, used_parts, quantity, article, executor)
-                                           VALUES (%s, %s, %s, %s, %s, %s, %s)
-                                       """
-                cursor.execute(sql_query,
-                               (date, mileage, work_names[i], used_parts[i], quantities[i], articles[i], executor))
-                print("Запись успешно сохранена в таблицу:", vin_code_table)
+            # Перенаправление на страницу деталей автомобиля после сохранения всех работ
+            return redirect('car_detail', vin_code=vin_code)
+        else:
+            print("Длины списков не совпадают!")
 
-        except Exception as e:
-            print(f"Ошибка при сохранении в WorkPerformed: {e}")
-            return render(request, 'main/car_detail.html', {'form': None, 'car': car, 'vin_code': vin_code})
-
-        # Перенаправление на страницу деталей автомобиля
-        return redirect('car_detail', vin_code=vin_code)
-
-    else:
-        print("Длины списков не совпадают!")
-        form = WorkForm()
-
-    # Возврат шаблона с формой для добавления работы
+    # Показ пустой формы, если метод не POST
+    form = WorkForm()
     return render(request, 'main/car_detail.html', {'form': form, 'car': car, 'vin_code': vin_code})
 
 
 #поиск запчастей
 def search_part(request):
-    article = request.GET.get('article')
-    try:
-        part = Item.objects.get(article=article)
-        data = {
-            'part': {
-                'name': part.name,
-                'manufacturer': part.manufacturer,
-            }
-        }
-    except Item.DoesNotExist:
-        data = {'part': None}
-    return JsonResponse(data)
+    query = request.GET.get('query', '')
+    if query:
+        # Ищем все запчасти, артикул или название которых содержит введенные символы
+        parts = Item.objects.filter(article__icontains=query) | Item.objects.filter(name__icontains=query)
+        parts_data = [{'article': part.article, 'name': part.name} for part in parts[:10]]  # Ограничиваем количество результатов до 10
+        return JsonResponse({'parts': parts_data})
+    return JsonResponse({'parts': []})
+
+#Поиск запчастей при доьавлении новой работы
+def parts_list(request):
+    parts = Item.objects.all()
+    return render(request, 'main/parts_list.html', {'parts': parts})
+
 
 #неисправности
 def add_fault(request, vin_code):

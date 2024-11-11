@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from .models import Car, WorkPerformed, Fault, Brand, Model, Item, Mechanic
+from django.db import transaction
 
 class CarForm(forms.ModelForm):
     STATUS_CHOICES = [
@@ -64,6 +65,27 @@ class WorkForm(forms.ModelForm):
         if self.car and mileage < self.car.mileage:
             raise ValidationError('Пробег не может быть меньше текущего пробега автомобиля.')
         return mileage
+
+    @transaction.atomic
+    def save(self, commit=True):
+        instance = super(WorkForm, self).save(commit=False)
+
+        # Снижение количества запчастей на складе
+        part_article = self.cleaned_data.get('article')
+        if part_article:
+            try:
+                part = Item.objects.get(article=part_article)
+                if part.quantity > 0:
+                    part.quantity -= 1
+                    part.save()
+                else:
+                    raise ValidationError('Недостаточное количество запчастей на складе.')
+            except Item.DoesNotExist:
+                raise ValidationError('Запчасть не найдена на складе.')
+
+        if commit:
+            instance.save()
+        return instance
 
 class FaultForm(forms.ModelForm):
     CRITICALITY_CHOICES = [

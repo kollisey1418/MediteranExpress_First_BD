@@ -28,6 +28,8 @@ urlpatterns = [
     path('register/', views.register_user, name='register_user'),
     path('autopark_main/', views.autopark_main, name='autopark_main'),
     path('drivers/', views.drivers, name='drivers'),
+    path('parts-list/', views.parts_list, name='parts_list'),
+
 
 
 ]
