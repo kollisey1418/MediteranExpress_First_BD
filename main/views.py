@@ -141,7 +141,7 @@ def car_detail(request, vin_code):
 
     # Извлекаем данные о работах из соответствующей таблицы
     with connection.cursor() as cursor:
-        cursor.execute(f"SELECT date, mileage, work_name, used_parts, quantity, article, executor FROM {vin_code_table}")
+        cursor.execute(f"SELECT date, mileage, work_name, used_parts, quantity, article, executor FROM {vin_code_table} ORDER BY date DESC")
         work_records = cursor.fetchall()
 
 
